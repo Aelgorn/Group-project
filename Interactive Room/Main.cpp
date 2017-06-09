@@ -1,87 +1,211 @@
-#include <stdio.h>
 
-//Shader class to easily add vertex and fragment shader (my object-oriented side is tenacious :P)
-//It already includes GLEW, iostream and string, so no need to include them again.
-#include "Shader.h"
-//GLFW
-#include "..\glfw\glfw3.h"
-//GLM
-#include "..\glm\glm.hpp"
-//Other GLM includes
-#include "..\glm\gtc\matrix_transform.hpp"
-#include "..\glm\gtc\type_ptr.hpp"
+#include "glew.h"
+#include "glfw3.h"
+#include "glm.hpp"
+#include "gtc/matrix_transform.hpp"
+#include "gtc/type_ptr.hpp"
 
-// Function prototypes
+#include "shader.h"
+#include "camera.h"
+#include "model.h"
+
+#include <iostream>
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
-// Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 800;
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+int width, height;
 
-// The MAIN function, from here we start the application and run the game loop
+// camera
+Camera camera(glm::vec3(45.6f, 3.7f, -2.43f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 int main()
 {
-	std::cout << "Starting GLFW context, OpenGL 3.3" << std::endl;
-	// Init GLFW
+	// glfw: initialize and configure
+	// ------------------------------
 	glfwInit();
-	// Set all the required options for GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
-	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Interactive Room", nullptr, nullptr);
+	glfwWindowHint(GLFW_SAMPLES, 8);
+	// glfw window creation
+	// --------------------
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
 	glfwMakeContextCurrent(window);
-
-	// Set the required callback functions
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, cursor_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, key_callback);
+
+	// tell GLFW to capture our mouse
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
 	// Initialize GLEW to setup the OpenGL Function pointers
-	glewInit();
-
+	if (glewInit() != GLEW_OK)
+	{
+		cout << "Failed to initialize GLEW" << endl;
+		return -1;
+	}
 	// Define the viewport dimensions
-	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 
-	// Build and compile our shader program
-	// Vertex & fragment shader
-	// Shader myShader("vertex.shader", "fragment.shader");
+	// configure global opengl state
+	// -----------------------------
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// This call will result in wireframe polygons, meaning it will only draw the perimeters of the triangles. Very cool x)
+	// build and compile shaders
+	// -------------------------
+	Shader ourShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
+
+	// load models
+	// -----------
+	Model lamps("C:/Users/alber/Desktop/New folder/lamps/lamps.obj");
+	Model house("C:/Users/alber/Desktop/New folder/house/house.obj");
+	Model windows("C:/Users/alber/Desktop/New folder/windows/windows.obj");
+
+	// draw in wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	// Enable depth test
-	glEnable(GL_DEPTH_TEST);
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS);
-	// Game loop
+	// render loop
+	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-		glfwPollEvents();
-		// Render
-		// Clear the colorbuffer
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// per-frame time logic
+		// --------------------
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 
-		// Swap the screen buffers
+		// input
+		// -----
+		processInput(window);
+
+		// render
+		// ------
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// don't forget to enable shader before setting uniforms
+		ourShader.use();
+
+		// view/projection transformations
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		ourShader.setMat4("projection", projection);
+		ourShader.setMat4("view", view);
+		// render the loaded model
+		glm::mat4 model;
+		model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
+		ourShader.setMat4("model", model);
+		lamps.Draw(ourShader);
+		house.Draw(ourShader);
+		windows.Draw(ourShader);
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
-	// Properly de-allocate all resources once they've outlived their purpose
-	// Terminate GLFW, clearing any resources allocated by GLFW.
+	// glfw: terminate, clearing all previously allocated GLFW resources.
+	// ------------------------------------------------------------------
 	glfwTerminate();
 	return 0;
 }
-// Is called whenever a key is pressed/released via GLFW
+
+// process all camera input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessMovement(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessMovement(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessMovement(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessMovement(RIGHT, deltaTime);
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	//just for testing. Will remove that later.
-	std::cout << key << std::endl;
+	if (key == GLFW_KEY_ESCAPE &&action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
 
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_L &&action == GLFW_PRESS)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	if (key == GLFW_KEY_T && action == GLFW_PRESS)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int w, int h)
+{
+	// make sure the viewport matches the new window dimensions; note that width and
+	// height will be significantly larger than specified on retina displays.
+	width = w;
+	height = h;
+	glViewport(0, 0, width, height);
+}
+
+bool processCam = false;
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		lastX = xpos;
+		lastY = ypos;
+		processCam = true;
+	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		processCam = false;
+	}
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void cursor_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (processCam) {
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+		lastX = xpos;
+		lastY = ypos;
+
+		camera.ProcessMouseMovement(xoffset, yoffset);
+	}
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(yoffset);
 }
