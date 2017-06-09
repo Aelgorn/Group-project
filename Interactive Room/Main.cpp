@@ -85,9 +85,9 @@ int main()
 
 	// load models
 	// -----------
-	Model lamps("C:/Users/alber/Desktop/New folder/lamps/lamps.obj");
-	Model house("C:/Users/alber/Desktop/New folder/house/house.obj");
-	Model windows("C:/Users/alber/Desktop/New folder/windows/windows.obj");
+	Model lamps("Models/lamps/lamps.obj");
+	Model house("Models/house/house.obj");
+	Model windows("Models/windows/windows.obj");
 
 	// draw in wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
