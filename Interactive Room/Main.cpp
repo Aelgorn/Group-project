@@ -86,6 +86,7 @@ int main()
 	// load models
 	// -----------
 	Model lamps("Models/lamps/lamps.obj");
+	Model bed("Models/bed/bed.obj");
 	Model house("Models/house/house.obj");
 	Model windows("Models/windows/windows.obj");
 
@@ -108,7 +109,7 @@ int main()
 
 		// render
 		// ------
-		glClearColor(0, 0, 0, 0);
+		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// don't forget to enable shader before setting uniforms
 		ourShader.use();
@@ -122,6 +123,7 @@ int main()
 		glm::mat4 model;
 		model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
 		ourShader.setMat4("model", model);
+		bed.Draw(ourShader);
 		lamps.Draw(ourShader);
 		house.Draw(ourShader);
 		windows.Draw(ourShader);
