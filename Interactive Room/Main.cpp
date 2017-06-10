@@ -24,7 +24,7 @@ const unsigned int SCR_HEIGHT = 600;
 int width, height;
 
 // camera
-Camera camera(glm::vec3(45.6f, 3.7f, -2.43f));
+Camera camera(glm::vec3(45.6f, 5.2f, -2.43f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
@@ -81,17 +81,55 @@ int main()
 
 	// build and compile shaders
 	// -------------------------
-	Shader ourShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
-
+	Shader generalShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
+	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+	
 	// load models
 	// -----------
-	Model lamps("Models/lamps/lamps.obj");
-	Model bed("Models/bed/bed.obj");
-	Model house("Models/house/house.obj");
-	Model windows("Models/windows/windows.obj");
 
-	// draw in wireframe
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//GLuint skyboxTexture;
+	//glGenTextures(1, &skyboxTexture);
+
+	//skyboxTexture = SOIL_load_OGL_single_cubemap
+	//(
+	//	"Models/skybox.jpg",
+	//	"WNESUD",
+	//	SOIL_LOAD_AUTO,
+	//	SOIL_CREATE_NEW_ID,
+	//	SOIL_FLAG_MIPMAPS
+	//);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
+	//bedroom
+	Model bed("Models/bed/bed.obj");
+	cout << "bed loaded" << '\n';
+
+	//kitchen
+	Model kitchen("Models/kitchen/kitchen.obj");
+	cout << "kitchen loaded" << '\n';
+	Model kitchenTable("Models/kitchen/kitchen table.obj");
+	cout << "kitchen table loaded" << '\n';
+	Model kitchenChair1("Models/kitchen/chair 1.obj");
+	cout << "kitchen chair 1 loaded" << '\n';
+	Model kitchenChair2("Models/kitchen/chair 2.obj");
+	cout << "kitchen chair 2 loaded" << '\n';
+	Model kitchenChair3("Models/kitchen/chair 3.obj");
+	cout << "kitchen chair 3 loaded" << '\n';
+	Model kitchenChair4("Models/kitchen/chair 4.obj");
+	cout << "kitchen chair 4 loaded" << '\n';
+	Model kettle("Models/kitchen/kettle.obj");
+	cout << "kettle loaded" << '\n';
+	Model blender("Models/kitchen/blender.obj");
+	cout << "blender loaded" << '\n';
+
+	//house
+	Model house("Models/house/house.obj");
+	cout << "house loaded" << '\n';
+	Model lamps("Models/house/lamps.obj");
+	cout << "lamps loaded" << '\n';
+	Model windows("Models/house/windows.obj");
+	cout << "windows loaded" << '\n';
+	//Model skyBox("Models/cube.obj");
 
 	// render loop
 	// -----------
@@ -111,22 +149,45 @@ int main()
 		// ------
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// don't forget to enable shader before setting uniforms
-		ourShader.use();
-
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		ourShader.setMat4("projection", projection);
-		ourShader.setMat4("view", view);
+
+		//skyBoxShader.use();
+		//glActiveTexture(GL_TEXTURE1);
+		//skyBoxShader.setMat4("view_matrix", view);
+		//skyBoxShader.setMat4("projection_matrix", projection);
+		//skyBoxShader.setInt("skyboxTexture", skyboxTexture);
+		//glDepthMask(GL_FALSE);
+		//skyBox.Draw(skyBoxShader);
+		//glDepthMask(GL_TRUE);
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+		generalShader.use();
+
+		generalShader.setMat4("projection", projection);
+		generalShader.setMat4("view", view);
 		// render the loaded model
 		glm::mat4 model;
-		model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
-		ourShader.setMat4("model", model);
-		bed.Draw(ourShader);
-		lamps.Draw(ourShader);
-		house.Draw(ourShader);
-		windows.Draw(ourShader);
+		//scale down the models
+		model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));
+		generalShader.setMat4("model", model);
+		//lamps first because of a bug
+		lamps.Draw(generalShader);
+		//kitchen except blender (for its transparency)
+		kitchen.Draw(generalShader);
+		kitchenTable.Draw(generalShader);
+		kitchenChair1.Draw(generalShader);
+		kitchenChair2.Draw(generalShader);
+		kitchenChair3.Draw(generalShader);
+		kitchenChair4.Draw(generalShader);
+		kettle.Draw(generalShader);
+		//bedroom
+		bed.Draw(generalShader);
+		//house
+		house.Draw(generalShader);
+		blender.Draw(generalShader);
+		windows.Draw(generalShader);
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);

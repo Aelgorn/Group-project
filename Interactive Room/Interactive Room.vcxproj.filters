@@ -49,5 +49,11 @@
     <None Include="glew32.dll">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Shaders\skybox_fragment.shader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\skybox_vertex.shader">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

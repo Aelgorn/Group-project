@@ -12,9 +12,9 @@ void main()
 	float ambientStrength = 0.04f;
 	vec3 lampLightColor = vec3(0.7);
 
-	vec3 lampPos_1 = vec3(46.0102f,4.5f,-13.9979f);
-	vec3 lampPos_2 = vec3(46.2899f,4.5f,-39.8267f);
-	vec3 lampPos_3 = vec3(16.7871f,4.5f,-13.4165f);
+	vec3 lampPos_1 = vec3(46.0102f,7.5f,-13.9979f);
+	vec3 lampPos_2 = vec3(46.2899f,7.5f,-39.8267f);
+	vec3 lampPos_3 = vec3(16.7871f,7.5f,-13.4165f);
 
 	vec3 norm = normalize(Normal);
 

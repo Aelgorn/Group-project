@@ -157,6 +157,8 @@
     <None Include="glew32.dll" />
     <None Include="Shaders\general_frag.shader" />
     <None Include="Shaders\general_vert.shader" />
+    <None Include="Shaders\skybox_fragment.shader" />
+    <None Include="Shaders\skybox_vertex.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
