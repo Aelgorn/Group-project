@@ -1,0 +1,27 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl _auto_1
+Ka 0.000000 0.000000 0.000000
+Kd 0.713725 0.549020 0.321569
+Ks 0.330000 0.330000 0.330000
+map_Kd coffee table/_auto_1.jpg
+
+newmtl _1
+Ka 0.000000 0.000000 0.000000
+Kd 0.176471 0.066667 0.019608
+Ks 0.330000 0.330000 0.330000
+map_Kd coffee table/_1.jpg
+
+newmtl _auto_5
+Ka 0.000000 0.000000 0.000000
+Kd 0.921569 0.925490 0.905882
+Ks 0.330000 0.330000 0.330000
+map_Kd coffee table/_auto_5.jpg
+
+newmtl FrontColor
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.330000 0.330000 0.330000
+

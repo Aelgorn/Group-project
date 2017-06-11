@@ -35,16 +35,28 @@ public:
 	Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
 	{
 		loadModel(path);
+		displacementFromOrigin = 0.5f * glm::vec3(xmax + xmin, ymax + ymin, zmax + zmin);
 	}
 
 	// draws the model, and thus all its meshes
 	void Draw(Shader shader)
 	{
-		for (unsigned int i = 0; i < meshes.size(); i++)
+		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].Draw(shader);
+		}
+	}
+	// returns the original displacement of a model object in respect to the origin
+	glm::vec3 displacement(float scale) {
+		return scale*displacementFromOrigin;
 	}
 
 private:
+	//used to get the location of the center of an object in order to rotate it
+	glm::vec3 displacementFromOrigin;
+	float xmin, ymin, zmin, xmax, ymax, zmax;
+	//for first time setup of xmin ,ymin, zmin, xmax, ymax, and zmax
+	bool first = true;
+
 	/*  Functions   */
 	// loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
 	void loadModel(string const &path)
@@ -82,9 +94,19 @@ private:
 			processNode(node->mChildren[i], scene);
 		}
 	}
-
 	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
+		if (first) {
+			//min
+			xmin = mesh->mVertices[0].x;
+			ymin = mesh->mVertices[0].y;
+			zmin = mesh->mVertices[0].z;
+			//max
+			xmax = mesh->mVertices[0].x;
+			ymax = mesh->mVertices[0].y;
+			zmax = mesh->mVertices[0].z;
+			first = false;
+		}
 		// data to fill
 		vector<Vertex> vertices;
 		vector<unsigned int> indices;
@@ -99,8 +121,23 @@ private:
 			if (mesh->mVertices) {
 				// positions
 				vector.x = mesh->mVertices[i].x;
+				if (vector.x < xmin)
+					xmin = vector.x;
+				if (vector.x > xmax)
+					xmax = vector.x;
+
 				vector.y = mesh->mVertices[i].y;
+				if (vector.y < ymin)
+					ymin = vector.y;
+				if (vector.y > ymax)
+					ymax = vector.y;
+
 				vector.z = mesh->mVertices[i].z;
+				if (vector.z < zmin)
+					zmin = vector.z;
+				if (vector.z > zmax)
+					zmax = vector.z;
+
 				vertex.Position = vector;
 			}
 			if (mesh->mNormals) {
@@ -164,10 +201,10 @@ private:
 			vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 			textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 			// 3. normal maps
-			std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+			vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 			textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 			// 4. height maps
-			std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+			vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 			textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 		}
 
@@ -188,7 +225,7 @@ private:
 			bool skip = false;
 			for (unsigned int j = 0; j < textures_loaded.size(); j++)
 			{
-				if (std::strcmp(textures_loaded[j].path.C_Str(), str.C_Str()) == 0)
+				if (strcmp(textures_loaded[j].path.C_Str(), str.C_Str()) == 0)
 				{
 					textures.push_back(textures_loaded[j]);
 					skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
@@ -242,7 +279,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
 	}
 	else
 	{
-		std::cout << "Texture failed to load at path: " << path << std::endl;
+		cout << "Texture failed to load at path: " << path << endl;
 		SOIL_free_image_data(data);
 	}
 

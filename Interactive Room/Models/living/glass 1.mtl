@@ -1,0 +1,10 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl transPlast
+Ka 0.000000 0.000000 0.000000
+Kd 0.894118 0.972549 1.000000
+Ks 0.330000 0.330000 0.330000
+d 0.350000
+map_Kd glass 1/transPlast.png

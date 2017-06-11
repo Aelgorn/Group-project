@@ -1,0 +1,27 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl Material_002
+Ka 0.000000 0.000000 0.000000
+Kd 0.215686 0.211765 0.215686
+Ks 0.330000 0.330000 0.330000
+map_Kd TV/Material_002.png
+
+newmtl Material_012
+Ka 0.000000 0.000000 0.000000
+Kd 0.639216 0.639216 0.639216
+Ks 0.330000 0.330000 0.330000
+
+newmtl _1
+Ka 0.000000 0.000000 0.000000
+Kd 0.176471 0.066667 0.019608
+Ks 0.330000 0.330000 0.330000
+map_Kd TV/_1.jpg
+
+newmtl plastic_white
+Ka 0.000000 0.000000 0.000000
+Kd 0.921569 0.921569 0.913725
+Ks 0.330000 0.330000 0.330000
+map_Kd TV/plastic_white.jpg
+

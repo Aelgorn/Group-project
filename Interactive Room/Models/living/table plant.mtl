@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl plastic_white
+Ka 0.000000 0.000000 0.000000
+Kd 0.921569 0.921569 0.913725
+Ks 0.330000 0.330000 0.330000
+map_Kd table plant/plastic_white.jpg
+
+newmtl _3
+Ka 0.000000 0.000000 0.000000
+Kd 0.568627 0.454902 0.360784
+Ks 0.330000 0.330000 0.330000
+map_Kd table plant/_3.jpg
+
