@@ -220,7 +220,6 @@ int main()
 		laptop.Draw(generalShader);
 		plant.Draw(generalShader);
 		dragon.Draw(generalShader);
-
 		//house
 		house.Draw(generalShader);
 		//transparent objects
