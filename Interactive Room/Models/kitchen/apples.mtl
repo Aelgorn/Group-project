@@ -1,0 +1,21 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl pal1
+Ka 0.000000 0.000000 0.000000
+Kd 0.313725 0.219608 0.039216
+Ks 0.330000 0.330000 0.330000
+
+newmtl White1
+Ka 0.000000 0.000000 0.000000
+Kd 0.709804 0.462745 0.223529
+Ks 0.330000 0.330000 0.330000
+map_Kd apples/White1.jpg
+
+newmtl Metal_Aluminum_Anodized
+Ka 0.000000 0.000000 0.000000
+Kd 0.184314 0.188235 0.200000
+Ks 0.330000 0.330000 0.330000
+map_Kd apples/Metal_Aluminum_Anodized.jpg
+
