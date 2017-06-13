@@ -8,9 +8,15 @@ Kd 0.419608 0.376471 0.337255
 Ks 0.330000 0.330000 0.330000
 map_Kd kitchen/Material_1.jpg
 
-newmtl Metal_Corrugated_Shiny
+newmtl Plastic_black
 Ka 0.000000 0.000000 0.000000
-Kd 0.756863 0.756863 0.756863
+Kd 0.000000 0.000000 0.000000
 Ks 0.330000 0.330000 0.330000
-map_Kd kitchen/Metal_Corrugated_Shiny.jpg
+map_Kd kitchen/Plastic_black.jpg
+
+newmtl Metal_Rough
+Ka 0.000000 0.000000 0.000000
+Kd 0.600000 0.615686 0.627451
+Ks 0.330000 0.330000 0.330000
+map_Kd kitchen/Metal_Rough.jpg
 

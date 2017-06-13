@@ -24,7 +24,7 @@ int width, height;
 const float scale = 0.02f;
 
 // camera
-Camera camera(glm::vec3(45.6f, 5.2f, -2.43f));
+Camera camera(scale * glm::vec3(2280, 260, -121.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
@@ -84,8 +84,22 @@ int main()
 
 	// build and compile shaders
 	// -------------------------
+
 	Shader generalShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
+
 	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+
+	generalShader.use();
+	// scaled light positions
+	// ----------------------
+	glm::vec3 livLamp1 = scale * glm::vec3(2066.43f, 375.f, -693.06f);
+	glm::vec3 livLamp2 = scale * glm::vec3(2608.79f, 375.f, -692.68f);
+	glm::vec3 bedLamp = scale * glm::vec3(2308.93f, 375.f, -1994.81f);
+	glm::vec3 kitchLamp = scale * glm::vec3(765.54f, 375.f, -670.18f);
+	generalShader.setVec3("livLamp1",livLamp1);
+	generalShader.setVec3("livLamp2", livLamp2);
+	generalShader.setVec3("bedLamp", bedLamp);
+	generalShader.setVec3("kitchLamp", kitchLamp);
 
 	// load models
 	// -----------
@@ -240,8 +254,6 @@ int main()
 		//scale down the models
 		shadeMod = glm::scale(model, glm::vec3(scale));
 		generalShader.setMat4("model", shadeMod);
-		//lamps first because of a bug
-		lamps.Draw(generalShader);
 		//kitchen
 		kitchen.Draw(generalShader);
 		kitchenTable.Draw(generalShader);
@@ -270,6 +282,7 @@ int main()
 		//house
 		house.Draw(generalShader);
 		//transparent objects
+		lamps.Draw(generalShader);
 		blender.Draw(generalShader);
 		glass1.Draw(generalShader);
 		glass2.Draw(generalShader);
