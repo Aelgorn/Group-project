@@ -1,16 +1,14 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "glew.h"
-#include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
+#include <glew.h>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
 #include <SOIL.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
 #include "mesh.h"
-
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -19,6 +17,22 @@
 #include <vector>
 using namespace std;
 
+enum Shift {
+	SHIFT_UP,
+	SHIFT_DOWN,
+	SHIFT_LEFT,
+	SHIFT_RIGHT,
+	SHIFT_FORWARD,
+	SHIFT_BACKWARD,
+};
+
+enum Rotate {
+	ROTATE_UP,
+	ROTATE_DOWN,
+	ROTATE_LEFT,
+	ROTATE_RIGHT,
+};
+
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
 class Model
@@ -26,14 +40,16 @@ class Model
 public:
 	/*  Model Data */
 	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+	float scale;
 	vector<Mesh> meshes;
 	string directory;
 	bool gammaCorrection;
-
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
-	Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
+	Model(string const &path, bool gamma = false, float scale = 0.02f) : gammaCorrection(gamma)
 	{
+		this->scale = scale;
+		model_matrix = glm::scale(model_matrix, glm::vec3(scale));
 		loadModel(path);
 		displacementFromOrigin = 0.5f * glm::vec3(xmax + xmin, ymax + ymin, zmax + zmin);
 	}
@@ -41,16 +57,50 @@ public:
 	// draws the model, and thus all its meshes
 	void Draw(Shader shader)
 	{
+		shader.setMat4("model", model_matrix);
 		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].Draw(shader);
 		}
 	}
+
 	// returns the original displacement of a model object in respect to the origin
-	glm::vec3 displacement(float scale) {
+	glm::vec3 displacement() {
 		return scale*displacementFromOrigin;
 	}
 
+	// shifts an object in the direction specified
+	void shift(Shift direction, Shader shader) {
+		switch (direction) {
+		case SHIFT_UP:
+			displacementFromOrigin.y += 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(0, 0.2f, 0));
+			break;
+		case SHIFT_DOWN:
+			displacementFromOrigin.y -= 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(0, -0.2f, 0));
+			break;
+		case SHIFT_LEFT:
+			displacementFromOrigin.x -= 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(-0.2, 0, 0));
+			break;
+		case SHIFT_RIGHT:
+			displacementFromOrigin.x += 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(0.2, 0, 0));
+			break;
+		case SHIFT_FORWARD:
+			displacementFromOrigin.z += 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(0, 0, 0.2));
+			break;
+		case SHIFT_BACKWARD:
+			displacementFromOrigin.z -= 0.2f;
+			model_matrix = glm::translate(model_matrix, glm::vec3(0, 0, -0.2));
+			break;
+		}
+	}
+
 private:
+	//model matrix used to rotate and shift Model object
+	glm::mat4 model_matrix = glm::mat4(1);
 	//used to get the location of the center of an object in order to rotate it
 	glm::vec3 displacementFromOrigin;
 	float xmin, ymin, zmin, xmax, ymax, zmax;
@@ -94,6 +144,8 @@ private:
 			processNode(node->mChildren[i], scene);
 		}
 	}
+
+	// processes mesh
 	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
 		if (first) {

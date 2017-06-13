@@ -9,10 +9,10 @@
 
 // Camera movement options abstracted as enums for ease of use and separation from system controls.
 enum Movement {
-	FORWARD,
-	BACKWARD,
-	LEFT,
-	RIGHT
+	MOVE_FORWARD,
+	MOVE_BACKWARD,
+	MOVE_LEFT,
+	MOVE_RIGHT
 };
 
 // Default camera values. Playing with the speed and sensitivity is okay, but for anything else, you'll be playing a dangerous game, muhahaha!
@@ -62,19 +62,19 @@ public:
 		float speed = MovementSpeed * steps;
 
 		switch (direction) {
-		case FORWARD:
+		case MOVE_FORWARD:
 			Position.x += Front.x * speed;
 			Position.z += Front.z * speed;
 			break;
-		case BACKWARD:
+		case MOVE_BACKWARD:
 			Position.x -= Front.x * speed;
 			Position.z -= Front.z * speed;
 			break;
-		case LEFT:
+		case MOVE_LEFT:
 			Position.x -= Right.x * speed;
 			Position.z -= Right.z * speed;
 			break;
-		case RIGHT:
+		case MOVE_RIGHT:
 			Position.x += Right.x * speed;
 			Position.z += Right.z * speed;
 			break;
