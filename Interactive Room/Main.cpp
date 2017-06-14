@@ -21,16 +21,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 int width, height;
-const float scale = 0.02f;
+const float scaling = 0.02f;
 
 // camera
-Camera camera(scale * glm::vec3(2280, 260, -121.5f));
+Camera camera(scaling * glm::vec3(2280, 260, -121.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+//pointer to selected object
+Model *selected;
 
 int main()
 {
@@ -92,11 +95,11 @@ int main()
 	generalShader.use();
 	// scaled light positions
 	// ----------------------
-	glm::vec3 livLamp1 = scale * glm::vec3(2066.43f, 375.f, -693.06f);
-	glm::vec3 livLamp2 = scale * glm::vec3(2608.79f, 375.f, -692.68f);
-	glm::vec3 bedLamp = scale * glm::vec3(2308.93f, 375.f, -1994.81f);
-	glm::vec3 kitchLamp = scale * glm::vec3(765.54f, 375.f, -670.18f);
-	generalShader.setVec3("livLamp1",livLamp1);
+	glm::vec3 livLamp1 = scaling * glm::vec3(2066.43f, 375.f, -693.06f);
+	glm::vec3 livLamp2 = scaling * glm::vec3(2608.79f, 375.f, -692.68f);
+	glm::vec3 bedLamp = scaling * glm::vec3(2308.93f, 375.f, -1994.81f);
+	glm::vec3 kitchLamp = scaling * glm::vec3(765.54f, 375.f, -670.18f);
+	generalShader.setVec3("livLamp1", livLamp1);
 	generalShader.setVec3("livLamp2", livLamp2);
 	generalShader.setVec3("bedLamp", bedLamp);
 	generalShader.setVec3("kitchLamp", kitchLamp);
@@ -209,7 +212,7 @@ int main()
 	cout << "windows loaded,\t\tposition -> " << windows.displacement().x << " : " << windows.displacement().y << " : " << windows.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << endl;
 	//Model skyBox("Models/cube.obj");
-
+	selected = &plant;
 	glm::mat4 model;
 	glm::mat4 shadeMod;
 	glClearColor(0, 0, 0, 1);
@@ -294,7 +297,7 @@ int main()
 	glfwTerminate();
 	return 0;
 }
-
+bool rotating = false;
 // process all camera input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
@@ -307,6 +310,34 @@ void processInput(GLFWwindow *window)
 		camera.ProcessMovement(MOVE_LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessMovement(MOVE_RIGHT, deltaTime);
+	if (rotating) {
+		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP);
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_DOWN);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP_RIGHT);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_RIGHT);
+	}
+	else {
+		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+			(*selected).shift(SHIFT_UP);
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+			(*selected).shift(SHIFT_DOWN);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).shift(SHIFT_FORWARD);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).shift(SHIFT_BACKWARD);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			(*selected).shift(SHIFT_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			(*selected).shift(SHIFT_RIGHT);
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -319,6 +350,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (key == GLFW_KEY_R && action == GLFW_PRESS)
+		rotating = true;
+	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
+		rotating = false;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

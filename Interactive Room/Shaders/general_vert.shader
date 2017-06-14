@@ -17,6 +17,6 @@ void main()
 
 	TexCoords = aTexCoords;
 	gl_Position = MVP * vec4(aPos, 1.0);
-	fragPosition = (model * vec4(aPos, 0)).xyz;
+	fragPosition = mat3(model) * aPos;
 	Normal = mat3(transpose(inverse(model))) * aNormal;
 }
