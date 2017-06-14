@@ -82,8 +82,10 @@ int main()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_CULL_FACE); //enable culling
-	glCullFace(GL_BACK); //cull the back faces (front, back, or both) glFrontFace(GL_CW); //specifies what to consider the “front” (CW/CCW)
+	glCullFace(GL_BACK); //cull the back faces
 	glFrontFace(GL_CCW); //specifies what to consider the “front” (CW/CCW)
+	//set vertical sync to prevent screen tearing
+	glfwSwapInterval(1);
 
 	// build and compile shaders
 	// -------------------------
@@ -287,8 +289,8 @@ int main()
 		glass1.Draw(generalShader);
 		glass2.Draw(generalShader);
 		windows.Draw(generalShader);
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
+		// glfw: swap buffers
+		// ------------------
 		glfwSwapBuffers(window);
 	}
 
