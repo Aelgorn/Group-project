@@ -79,32 +79,29 @@ public:
 
 	// shifts an object in the direction specified
 	void shift(Shift direction) {
-		vec3 temp = displacementFromOrigin;
-		vec3 rotated = displacementFromOrigin * mat3(rotation);
-		displacementFromOrigin = rotated;
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin += scale * step * coordinates[1];
+			displacementFromOrigin.y += scale*step;
 			model_matrix = translate(model_matrix, step*coordinates[1]);
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin -= scale *  step * coordinates[1];
+			displacementFromOrigin.y -= scale*step;
 			model_matrix = translate(model_matrix, -step*coordinates[1]);
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin -= scale *  step * coordinates[0];
+			displacementFromOrigin.x -= scale*step;
 			model_matrix = translate(model_matrix, -step*coordinates[0]);
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin += scale *  step * coordinates[0];
+			displacementFromOrigin.x += scale*step;
 			model_matrix = translate(model_matrix, step*coordinates[0]);
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin -= scale *  step * coordinates[2];
+			displacementFromOrigin.z -= scale*step;
 			model_matrix = translate(model_matrix, -step*coordinates[2]);
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin += scale *  step * coordinates[2];
+			displacementFromOrigin.z += scale*step;
 			model_matrix = translate(model_matrix, step*coordinates[2]);
 			break;
 		}
