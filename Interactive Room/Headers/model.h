@@ -1,16 +1,14 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "glew.h"
-#include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
+#include <glew.h>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
 #include <SOIL.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
 #include "mesh.h"
-
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -18,6 +16,25 @@
 #include <map>
 #include <vector>
 using namespace std;
+using namespace glm;
+
+enum Shift {
+	SHIFT_UP,
+	SHIFT_DOWN,
+	SHIFT_LEFT,
+	SHIFT_RIGHT,
+	SHIFT_FORWARD,
+	SHIFT_BACKWARD,
+};
+
+enum Rotate {
+	ROTATE_UP,
+	ROTATE_DOWN,
+	ROTATE_LEFT,
+	ROTATE_RIGHT,
+	ROTATE_UP_LEFT,
+	ROTATE_UP_RIGHT
+};
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
@@ -26,33 +43,108 @@ class Model
 public:
 	/*  Model Data */
 	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+	float scale;
 	vector<Mesh> meshes;
 	string directory;
 	bool gammaCorrection;
+	//steps to translate
+	const float step = 10.f;
+	//angle of rotation
+	const float angle = 5.f;
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
-	Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
+	Model(string const &path, bool gamma = false, float scale = 0.02f) : gammaCorrection(gamma)
 	{
+		this->scale = scale;
+		model_matrix = glm::scale(mat4(1), vec3(scale));
 		loadModel(path);
-		displacementFromOrigin = 0.5f * glm::vec3(xmax + xmin, ymax + ymin, zmax + zmin);
+		displacementFromOrigin = scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin);
+		//displacementFromOrigin = 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin);
 	}
 
 	// draws the model, and thus all its meshes
 	void Draw(Shader shader)
 	{
+		shader.setMat4("model", model_matrix);
 		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].Draw(shader);
 		}
 	}
+
 	// returns the original displacement of a model object in respect to the origin
-	glm::vec3 displacement(float scale) {
-		return scale*displacementFromOrigin;
+	vec3 displacement() {
+		return displacementFromOrigin;
 	}
 
+	// shifts an object in the direction specified
+	void shift(Shift direction) {
+		switch (direction) {
+		case SHIFT_UP:
+			displacementFromOrigin.y += step;
+			model_matrix = translate(model_matrix, vec3(0, step, 0));
+			break;
+		case SHIFT_DOWN:
+			displacementFromOrigin.y -= step;
+			model_matrix = translate(model_matrix, vec3(0, -step, 0));
+			break;
+		case SHIFT_LEFT:
+			displacementFromOrigin.x -= step;
+			model_matrix = translate(model_matrix, vec3(-step, 0, 0));
+			break;
+		case SHIFT_RIGHT:
+			displacementFromOrigin.x += step;
+			model_matrix = translate(model_matrix, vec3(step, 0, 0));
+			break;
+		case SHIFT_FORWARD:
+			displacementFromOrigin.z -= step;
+			model_matrix = translate(model_matrix, vec3(0, 0, -step));
+			break;
+		case SHIFT_BACKWARD:
+			displacementFromOrigin.z += step;
+			model_matrix = translate(model_matrix, vec3(0, 0, step));
+			break;
+		}
+	}
+	//rotates an object in the direction specified
+	void rotate(Rotate direction) {
+		glm::mat4 trans;
+		glm::mat4 transBack;
+		//model_matrix = translate(model_matrix, -displacementFromOrigin);
+		trans = translate(trans, -displacementFromOrigin);
+		transBack = translate(transBack, displacementFromOrigin);
+		switch (direction) {
+		case ROTATE_UP:
+			rotation = glm::rotate(mat4(1), radians(angle), vec3(1, 0, 0));
+			break;
+		case ROTATE_DOWN:
+			rotation = glm::rotate(mat4(1), radians(-angle), vec3(1, 0, 0));
+			break;
+		case ROTATE_LEFT:
+			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 1, 0));
+			break;
+		case ROTATE_RIGHT:
+			rotation = glm::rotate(mat4(1), radians(angle), vec3(0, 1, 0));
+			break;
+		case ROTATE_UP_LEFT:
+			rotation = glm::rotate(mat4(1), radians(angle), vec3(0, 0, 1));
+			break;
+		case ROTATE_UP_RIGHT:
+			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 0, 1));
+			break;
+		}
+
+		//model_matrix *= rotation;
+		//displacementFromOrigin = displacementFromOrigin / mat3(rotation);
+		//model_matrix *= translate(mat4(1), displacementFromOrigin);
+		model_matrix = transBack * rotation * trans * model_matrix;
+	}
 private:
+	mat4 rotation;
+	//model matrix used to rotate and shift Model object
+	mat4 model_matrix;
 	//used to get the location of the center of an object in order to rotate it
-	glm::vec3 displacementFromOrigin;
+	vec3 displacementFromOrigin;
 	float xmin, ymin, zmin, xmax, ymax, zmax;
 	//for first time setup of xmin ,ymin, zmin, xmax, ymax, and zmax
 	bool first = true;
@@ -94,6 +186,8 @@ private:
 			processNode(node->mChildren[i], scene);
 		}
 	}
+
+	// processes mesh
 	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
 		if (first) {
@@ -116,7 +210,7 @@ private:
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
 			Vertex vertex;
-			glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+			vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder vec3 first.
 
 			if (mesh->mVertices) {
 				// positions
@@ -150,7 +244,7 @@ private:
 			// texture coordinates
 			if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
 			{
-				glm::vec2 vec;
+				vec2 vec;
 				// a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't
 				// use models where a vertex can have multiple texture coordinates so we always take the first set (0).
 				vec.x = mesh->mTextureCoords[0][i].x;
@@ -158,7 +252,7 @@ private:
 				vertex.TexCoords = vec;
 			}
 			else
-				vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+				vertex.TexCoords = vec2(0.0f, 0.0f);
 			if (mesh->mTangents) {
 				// tangent
 				vector.x = mesh->mTangents[i].x;

@@ -21,16 +21,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 int width, height;
-const float scale = 0.02f;
+const float scaling = 0.02f;
 
 // camera
-Camera camera(scale * glm::vec3(2280, 260, -121.5f));
+Camera camera(scaling * glm::vec3(2280, 260, -121.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+//pointer to selected object
+Model *selected;
 
 int main()
 {
@@ -92,11 +95,11 @@ int main()
 	generalShader.use();
 	// scaled light positions
 	// ----------------------
-	glm::vec3 livLamp1 = scale * glm::vec3(2066.43f, 375.f, -693.06f);
-	glm::vec3 livLamp2 = scale * glm::vec3(2608.79f, 375.f, -692.68f);
-	glm::vec3 bedLamp = scale * glm::vec3(2308.93f, 375.f, -1994.81f);
-	glm::vec3 kitchLamp = scale * glm::vec3(765.54f, 375.f, -670.18f);
-	generalShader.setVec3("livLamp1",livLamp1);
+	glm::vec3 livLamp1 = scaling * glm::vec3(2066.43f, 375.f, -693.06f);
+	glm::vec3 livLamp2 = scaling * glm::vec3(2608.79f, 375.f, -692.68f);
+	glm::vec3 bedLamp = scaling * glm::vec3(2308.93f, 375.f, -1994.81f);
+	glm::vec3 kitchLamp = scaling * glm::vec3(765.54f, 375.f, -670.18f);
+	generalShader.setVec3("livLamp1", livLamp1);
 	generalShader.setVec3("livLamp2", livLamp2);
 	generalShader.setVec3("bedLamp", bedLamp);
 	generalShader.setVec3("kitchLamp", kitchLamp);
@@ -119,97 +122,97 @@ int main()
 	int objNum = 28;
 	//bedroom
 	Model bed("Models/bed/bed.obj");
-	cout << "bed loaded,\t\tposition -> " << bed.displacement(scale).x << " : " << bed.displacement(scale).y << " : " << bed.displacement(scale).z << ".\t\t";
+	cout << "bed loaded,\t\tposition -> " << bed.displacement().x << " : " << bed.displacement().y << " : " << bed.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model ironman("Models/bed/ironman.obj");
-	cout << "ironman loaded,\t\tposition -> " << ironman.displacement(scale).x << " : " << ironman.displacement(scale).y << " : " << ironman.displacement(scale).z << ".\t\t";
+	cout << "ironman loaded,\t\tposition -> " << ironman.displacement().x << " : " << ironman.displacement().y << " : " << ironman.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model wardrobe("Models/bed/wardrobe.obj");
-	cout << "wardrobe loaded,\tposition -> " << wardrobe.displacement(scale).x << " : " << wardrobe.displacement(scale).y << " : " << wardrobe.displacement(scale).z << ".\t\t";
+	cout << "wardrobe loaded,\tposition -> " << wardrobe.displacement().x << " : " << wardrobe.displacement().y << " : " << wardrobe.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model nightstand("Models/bed/nightstand.obj");
-	cout << "nightstand loaded,\tposition -> " << nightstand.displacement(scale).x << " : " << nightstand.displacement(scale).y << " : " << nightstand.displacement(scale).z << ".\t\t";
+	cout << "nightstand loaded,\tposition -> " << nightstand.displacement().x << " : " << nightstand.displacement().y << " : " << nightstand.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model phone("Models/bed/phone.obj");
-	cout << "phone loaded,\t\tposition -> " << phone.displacement(scale).x << " : " << phone.displacement(scale).y << " : " << phone.displacement(scale).z << ".\t\t";
+	cout << "phone loaded,\t\tposition -> " << phone.displacement().x << " : " << phone.displacement().y << " : " << phone.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 
 	//kitchen
 	Model kitchen("Models/kitchen/kitchen.obj");
-	cout << "kitchen loaded,\t\tposition -> " << kitchen.displacement(scale).x << " : " << kitchen.displacement(scale).y << " : " << kitchen.displacement(scale).z << ".\t\t";
+	cout << "kitchen loaded,\t\tposition -> " << kitchen.displacement().x << " : " << kitchen.displacement().y << " : " << kitchen.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kitchenTable("Models/kitchen/kitchen table.obj");
-	cout << "kitchen table loaded,\tposition -> " << kitchenTable.displacement(scale).x << " : " << kitchenTable.displacement(scale).y << " : " << kitchenTable.displacement(scale).z << ".\t\t";
+	cout << "kitchen table loaded,\tposition -> " << kitchenTable.displacement().x << " : " << kitchenTable.displacement().y << " : " << kitchenTable.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kitchenChair1("Models/kitchen/chair 1.obj");
-	cout << "kitchen chair 1 loaded,\tposition -> " << kitchenChair1.displacement(scale).x << " : " << kitchenChair1.displacement(scale).y << " : " << kitchenChair1.displacement(scale).z << ".\t\t";
+	cout << "kitchen chair 1 loaded,\tposition -> " << kitchenChair1.displacement().x << " : " << kitchenChair1.displacement().y << " : " << kitchenChair1.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kitchenChair2("Models/kitchen/chair 2.obj");
-	cout << "kitchen chair 2 loaded,\tposition -> " << kitchenChair2.displacement(scale).x << " : " << kitchenChair2.displacement(scale).y << " : " << kitchenChair2.displacement(scale).z << ".\t\t";
+	cout << "kitchen chair 2 loaded,\tposition -> " << kitchenChair2.displacement().x << " : " << kitchenChair2.displacement().y << " : " << kitchenChair2.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kitchenChair3("Models/kitchen/chair 3.obj");
-	cout << "kitchen chair 3 loaded,\tposition -> " << kitchenChair3.displacement(scale).x << " : " << kitchenChair3.displacement(scale).y << " : " << kitchenChair3.displacement(scale).z << ".\t\t";
+	cout << "kitchen chair 3 loaded,\tposition -> " << kitchenChair3.displacement().x << " : " << kitchenChair3.displacement().y << " : " << kitchenChair3.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kitchenChair4("Models/kitchen/chair 4.obj");
-	cout << "kitchen chair 4 loaded,\tposition -> " << kitchenChair4.displacement(scale).x << " : " << kitchenChair4.displacement(scale).y << " : " << kitchenChair4.displacement(scale).z << ".\t\t";
+	cout << "kitchen chair 4 loaded,\tposition -> " << kitchenChair4.displacement().x << " : " << kitchenChair4.displacement().y << " : " << kitchenChair4.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model kettle("Models/kitchen/kettle.obj");
-	cout << "kettle loaded,\t\tposition -> " << kettle.displacement(scale).x << " : " << kettle.displacement(scale).y << " : " << kettle.displacement(scale).z << ".\t\t";
+	cout << "kettle loaded,\t\tposition -> " << kettle.displacement().x << " : " << kettle.displacement().y << " : " << kettle.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model blender("Models/kitchen/blender.obj");
-	cout << "blender loaded,\t\tposition -> " << blender.displacement(scale).x << " : " << blender.displacement(scale).y << " : " << blender.displacement(scale).z << ".\t\t";
+	cout << "blender loaded,\t\tposition -> " << blender.displacement().x << " : " << blender.displacement().y << " : " << blender.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model gun("Models/kitchen/gun.obj");
-	cout << "gun loaded,\t\tposition -> " << gun.displacement(scale).x << " : " << gun.displacement(scale).y << " : " << gun.displacement(scale).z << ".\t\t";
+	cout << "gun loaded,\t\tposition -> " << gun.displacement().x << " : " << gun.displacement().y << " : " << gun.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model apples("Models/kitchen/apples.obj");
-	cout << "apples loaded,\t\tposition -> " << apples.displacement(scale).x << " : " << apples.displacement(scale).y << " : " << apples.displacement(scale).z << ".\t\t";
+	cout << "apples loaded,\t\tposition -> " << apples.displacement().x << " : " << apples.displacement().y << " : " << apples.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 
 	//living room
 	Model tv("Models/living/TV.obj");
-	cout << "TV loaded,\t\tposition -> " << tv.displacement(scale).x << " : " << tv.displacement(scale).y << " : " << tv.displacement(scale).z << ".\t\t";
+	cout << "TV loaded,\t\tposition -> " << tv.displacement().x << " : " << tv.displacement().y << " : " << tv.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model couch("Models/living/couch.obj");
-	cout << "couch loaded,\t\tposition -> " << couch.displacement(scale).x << " : " << couch.displacement(scale).y << " : " << couch.displacement(scale).z << ".\t\t";
+	cout << "couch loaded,\t\tposition -> " << couch.displacement().x << " : " << couch.displacement().y << " : " << couch.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model coffeTable("Models/living/coffee table.obj");
-	cout << "coffee table loaded,\tposition -> " << coffeTable.displacement(scale).x << " : " << coffeTable.displacement(scale).y << " : " << coffeTable.displacement(scale).z << ".\t\t";
+	cout << "coffee table loaded,\tposition -> " << coffeTable.displacement().x << " : " << coffeTable.displacement().y << " : " << coffeTable.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model tablePlant("Models/living/table plant.obj");
-	cout << "table plant loaded,\tposition -> " << tablePlant.displacement(scale).x << " : " << tablePlant.displacement(scale).y << " : " << tablePlant.displacement(scale).z << ".\t\t";
+	cout << "table plant loaded,\tposition -> " << tablePlant.displacement().x << " : " << tablePlant.displacement().y << " : " << tablePlant.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model tray("Models/living/tray.obj");
-	cout << "tray loaded,\t\tposition -> " << tray.displacement(scale).x << " : " << tray.displacement(scale).y << " : " << tray.displacement(scale).z << ".\t\t";
+	cout << "tray loaded,\t\tposition -> " << tray.displacement().x << " : " << tray.displacement().y << " : " << tray.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model glass1("Models/living/glass 1.obj");
-	cout << "glass 1 loaded,\t\tposition -> " << glass1.displacement(scale).x << " : " << glass1.displacement(scale).y << " : " << glass1.displacement(scale).z << ".\t\t";
+	cout << "glass 1 loaded,\t\tposition -> " << glass1.displacement().x << " : " << glass1.displacement().y << " : " << glass1.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model glass2("Models/living/glass 2.obj");
-	cout << "glass 2 loaded,\t\tposition -> " << glass2.displacement(scale).x << " : " << glass2.displacement(scale).y << " : " << glass2.displacement(scale).z << ".\t\t";
+	cout << "glass 2 loaded,\t\tposition -> " << glass2.displacement().x << " : " << glass2.displacement().y << " : " << glass2.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model laptop("Models/living/laptop.obj");
-	cout << "laptop loaded,\t\tposition -> " << laptop.displacement(scale).x << " : " << laptop.displacement(scale).y << " : " << laptop.displacement(scale).z << ".\t\t";
+	cout << "laptop loaded,\t\tposition -> " << laptop.displacement().x << " : " << laptop.displacement().y << " : " << laptop.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model plant("Models/living/indoor plant.obj");
-	cout << "indoor plant loaded,\tposition -> " << plant.displacement(scale).x << " : " << plant.displacement(scale).y << " : " << plant.displacement(scale).z << ".\t\t";
+	cout << "indoor plant loaded,\tposition -> " << plant.displacement().x << " : " << plant.displacement().y << " : " << plant.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model dragon("Models/living/dragon.obj");
-	cout << "dragon loaded,\t\tposition -> " << dragon.displacement(scale).x << " : " << dragon.displacement(scale).y << " : " << dragon.displacement(scale).z << ".\t\t";
+	cout << "dragon loaded,\t\tposition -> " << dragon.displacement().x << " : " << dragon.displacement().y << " : " << dragon.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 
 	//house
 	Model house("Models/house/house.obj");
-	cout << "house loaded,\t\tposition -> " << house.displacement(scale).x << " : " << house.displacement(scale).y << " : " << house.displacement(scale).z << ".\t\t";
+	cout << "house loaded,\t\tposition -> " << house.displacement().x << " : " << house.displacement().y << " : " << house.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model lamps("Models/house/lamps.obj");
-	cout << "lamps loaded,\t\tposition -> " << lamps.displacement(scale).x << " : " << lamps.displacement(scale).y << " : " << lamps.displacement(scale).z << ".\t\t";
+	cout << "lamps loaded,\t\tposition -> " << lamps.displacement().x << " : " << lamps.displacement().y << " : " << lamps.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model windows("Models/house/windows.obj");
-	cout << "windows loaded,\t\tposition -> " << windows.displacement(scale).x << " : " << windows.displacement(scale).y << " : " << windows.displacement(scale).z << ".\t\t";
+	cout << "windows loaded,\t\tposition -> " << windows.displacement().x << " : " << windows.displacement().y << " : " << windows.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << endl;
 	//Model skyBox("Models/cube.obj");
-
+	selected = &plant;
 	glm::mat4 model;
 	glm::mat4 shadeMod;
 	glClearColor(0, 0, 0, 1);
@@ -250,10 +253,7 @@ int main()
 
 		generalShader.setMat4("projection", projection);
 		generalShader.setMat4("view", view);
-		// render the loaded model
-		//scale down the models
-		shadeMod = glm::scale(model, glm::vec3(scale));
-		generalShader.setMat4("model", shadeMod);
+		// render the loaded models
 		//kitchen
 		kitchen.Draw(generalShader);
 		kitchenTable.Draw(generalShader);
@@ -297,19 +297,47 @@ int main()
 	glfwTerminate();
 	return 0;
 }
-
+bool rotating = false;
 // process all camera input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessMovement(FORWARD, deltaTime);
+		camera.ProcessMovement(MOVE_FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessMovement(BACKWARD, deltaTime);
+		camera.ProcessMovement(MOVE_BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessMovement(LEFT, deltaTime);
+		camera.ProcessMovement(MOVE_LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessMovement(RIGHT, deltaTime);
+		camera.ProcessMovement(MOVE_RIGHT, deltaTime);
+	if (rotating) {
+		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP);
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_DOWN);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP_RIGHT);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_RIGHT);
+	}
+	else {
+		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+			(*selected).shift(SHIFT_UP);
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+			(*selected).shift(SHIFT_DOWN);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).shift(SHIFT_FORWARD);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).shift(SHIFT_BACKWARD);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			(*selected).shift(SHIFT_LEFT);
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			(*selected).shift(SHIFT_RIGHT);
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -322,6 +350,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (key == GLFW_KEY_R && action == GLFW_PRESS)
+		rotating = true;
+	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
+		rotating = false;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
