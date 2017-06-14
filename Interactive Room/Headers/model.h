@@ -105,11 +105,9 @@ public:
 			model_matrix = translate(model_matrix, vec3(0, 0, step));
 			break;
 		}
-		displacementFromOrigin = displacementFromOrigin * mat3(rotation);
 	}
 	//rotates an object in the direction specified
 	void rotate(Rotate direction) {
-		cout << model_matrix[3][0] << " : " << model_matrix[3][1] << " : " << model_matrix[3][2] << " : " << model_matrix[3][3] << endl;
 		glm::mat4 trans;
 		glm::mat4 transBack;
 		//model_matrix = translate(model_matrix, -displacementFromOrigin);
@@ -135,10 +133,9 @@ public:
 			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 0, 1));
 			break;
 		}
-		cout << "post " << model_matrix[3][0] << " : " << model_matrix[3][1] << " : " << model_matrix[3][2] << " : " << model_matrix[3][3] << endl;
 
-		//trans *= rotation;
 		//model_matrix *= rotation;
+		//displacementFromOrigin = displacementFromOrigin / mat3(rotation);
 		//model_matrix *= translate(mat4(1), displacementFromOrigin);
 		model_matrix = transBack * rotation * trans * model_matrix;
 	}
