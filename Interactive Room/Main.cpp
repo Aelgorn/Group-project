@@ -312,13 +312,13 @@ void processInput(GLFWwindow *window)
 		camera.ProcessMovement(MOVE_RIGHT, deltaTime);
 	if (rotating) {
 		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_UP);
-		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_DOWN);
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_UP_LEFT);
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_UP_RIGHT);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_DOWN);
 		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_LEFT);
 		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)

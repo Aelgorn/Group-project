@@ -37,6 +37,7 @@ enum Rotate {
 };
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
+void printMat(mat4 mat, int col);
 
 class Model
 {
@@ -50,7 +51,7 @@ public:
 	//steps to translate
 	const float step = 10.f;
 	//angle of rotation
-	const float angle = 5.f;
+	const float angle = 1.f;
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
@@ -60,7 +61,6 @@ public:
 		model_matrix = glm::scale(mat4(1), vec3(scale));
 		loadModel(path);
 		displacementFromOrigin = scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin);
-		//displacementFromOrigin = 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin);
 	}
 
 	// draws the model, and thus all its meshes
@@ -79,32 +79,38 @@ public:
 
 	// shifts an object in the direction specified
 	void shift(Shift direction) {
+		vec3 temp = displacementFromOrigin;
+		vec3 rotated = displacementFromOrigin * mat3(rotation);
+		displacementFromOrigin = rotated;
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin.y += step;
-			model_matrix = translate(model_matrix, vec3(0, step, 0));
+			displacementFromOrigin += scale * step * coordinates[1];
+			model_matrix = translate(model_matrix, step*coordinates[1]);
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin.y -= step;
-			model_matrix = translate(model_matrix, vec3(0, -step, 0));
+			displacementFromOrigin -= scale *  step * coordinates[1];
+			model_matrix = translate(model_matrix, -step*coordinates[1]);
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin.x -= step;
-			model_matrix = translate(model_matrix, vec3(-step, 0, 0));
+			displacementFromOrigin -= scale *  step * coordinates[0];
+			model_matrix = translate(model_matrix, -step*coordinates[0]);
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin.x += step;
-			model_matrix = translate(model_matrix, vec3(step, 0, 0));
+			displacementFromOrigin += scale *  step * coordinates[0];
+			model_matrix = translate(model_matrix, step*coordinates[0]);
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin.z -= step;
-			model_matrix = translate(model_matrix, vec3(0, 0, -step));
+			displacementFromOrigin -= scale *  step * coordinates[2];
+			model_matrix = translate(model_matrix, -step*coordinates[2]);
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin.z += step;
-			model_matrix = translate(model_matrix, vec3(0, 0, step));
+			displacementFromOrigin += scale *  step * coordinates[2];
+			model_matrix = translate(model_matrix, step*coordinates[2]);
 			break;
 		}
+		cout << displacementFromOrigin.x << " : " << displacementFromOrigin.y << " : " << displacementFromOrigin.z << endl;
+		cout << "mat ";
+		printMat(model_matrix, 3);
 	}
 	//rotates an object in the direction specified
 	void rotate(Rotate direction) {
@@ -134,12 +140,23 @@ public:
 			break;
 		}
 
+		coordinates[0] = coordinates[0] * (mat3(rotation));
+		coordinates[1] = coordinates[1] * (mat3(rotation));
+		coordinates[2] = coordinates[2] * (mat3(rotation));
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				cout << coordinates[i][j] << " : ";
+			}
+			cout << endl;
+		}
+
 		//model_matrix *= rotation;
-		//displacementFromOrigin = displacementFromOrigin / mat3(rotation);
-		//model_matrix *= translate(mat4(1), displacementFromOrigin);
+		//model_matrix *= translate(mat4(1), displace);
+
 		model_matrix = transBack * rotation * trans * model_matrix;
 	}
 private:
+	vec3 coordinates[3] = { vec3(1,0,0), vec3(0,1,0), vec3(0,0,1) };
 	mat4 rotation;
 	//model matrix used to rotate and shift Model object
 	mat4 model_matrix;
@@ -378,5 +395,12 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
 	}
 
 	return textureID;
+}
+
+void printMat(mat4 mat, int col) {
+	for (int i = 0; i < 3; ++i) {
+		cout << ": " << mat[col][i] << " ";
+	}
+	cout << endl;
 }
 #endif
