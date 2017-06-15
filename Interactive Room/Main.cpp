@@ -34,7 +34,7 @@ float lastFrame = 0.0f;
 
 //pointer to selected object
 Model *selected;
-
+vector<Model*> Model::models;
 int main()
 {
 	// glfw: initialize and configure
@@ -81,9 +81,11 @@ int main()
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_CULL_FACE); //enable culling
-	glCullFace(GL_BACK); //cull the back faces (front, back, or both) glFrontFace(GL_CW); //specifies what to consider the “front” (CW/CCW)
-	glFrontFace(GL_CCW); //specifies what to consider the “front” (CW/CCW)
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	//set vertical sync to prevent screen tearing
+	glfwSwapInterval(1);
 
 	// build and compile shaders
 	// -------------------------
@@ -212,6 +214,14 @@ int main()
 	cout << "windows loaded,\t\tposition -> " << windows.displacement().x << " : " << windows.displacement().y << " : " << windows.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << endl;
 	//Model skyBox("Models/cube.obj");
+
+	//sets the shader that each model is going to use.
+	//That way, when a model is selected, it would be easier to switch its shader without affecting the other models or complicating the code
+	for (int i = 0; i < Model::models.size(); ++i) {
+		(*(Model::models[i])).setShader(&generalShader);
+		(*(Model::models[i])).setCamera(&camera);
+	}
+
 	selected = &plant;
 	glm::mat4 model;
 	glm::mat4 shadeMod;
@@ -255,40 +265,40 @@ int main()
 		generalShader.setMat4("view", view);
 		// render the loaded models
 		//kitchen
-		kitchen.Draw(generalShader);
-		kitchenTable.Draw(generalShader);
-		kitchenChair1.Draw(generalShader);
-		kitchenChair2.Draw(generalShader);
-		kitchenChair3.Draw(generalShader);
-		kitchenChair4.Draw(generalShader);
-		kettle.Draw(generalShader);
-		gun.Draw(generalShader);
-		apples.Draw(generalShader);
+		kitchen.Draw();
+		kitchenTable.Draw();
+		kitchenChair1.Draw();
+		kitchenChair2.Draw();
+		kitchenChair3.Draw();
+		kitchenChair4.Draw();
+		kettle.Draw();
+		gun.Draw();
+		apples.Draw();
 		//bedroom
-		bed.Draw(generalShader);
-		ironman.Draw(generalShader);
-		wardrobe.Draw(generalShader);
-		nightstand.Draw(generalShader);
-		phone.Draw(generalShader);
+		bed.Draw();
+		ironman.Draw();
+		wardrobe.Draw();
+		nightstand.Draw();
+		phone.Draw();
 		//living room
-		tv.Draw(generalShader);
-		couch.Draw(generalShader);
-		coffeTable.Draw(generalShader);
-		tablePlant.Draw(generalShader);
-		tray.Draw(generalShader);
-		laptop.Draw(generalShader);
-		plant.Draw(generalShader);
-		dragon.Draw(generalShader);
+		tv.Draw();
+		couch.Draw();
+		coffeTable.Draw();
+		tablePlant.Draw();
+		tray.Draw();
+		laptop.Draw();
+		plant.Draw();
+		dragon.Draw();
 		//house
-		house.Draw(generalShader);
+		house.Draw();
 		//transparent objects
-		lamps.Draw(generalShader);
-		blender.Draw(generalShader);
-		glass1.Draw(generalShader);
-		glass2.Draw(generalShader);
-		windows.Draw(generalShader);
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
+		lamps.Draw();
+		blender.Draw();
+		glass1.Draw();
+		glass2.Draw();
+		windows.Draw();
+		// glfw: swap buffers
+		// ------------------
 		glfwSwapBuffers(window);
 	}
 
@@ -312,13 +322,13 @@ void processInput(GLFWwindow *window)
 		camera.ProcessMovement(MOVE_RIGHT, deltaTime);
 	if (rotating) {
 		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_UP);
-		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_DOWN);
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_UP_LEFT);
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_UP_RIGHT);
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_UP);
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			(*selected).rotate(ROTATE_DOWN);
 		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 			(*selected).rotate(ROTATE_LEFT);
 		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
