@@ -1,8 +1,6 @@
 #include "glew.h"
 #include "glfw3.h"
 #include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
-#include "gtc/type_ptr.hpp"
 
 #include "shader.h"
 #include "camera.h"
@@ -35,7 +33,6 @@ glm::mat4 view;
 
 // timing
 float deltaTime = 0.0f;
-float lastFrame = 0.0f;
 
 //pointer to selected object
 Model *selected;
@@ -240,9 +237,12 @@ int main()
 		(*(Model::models[i])).setCamera(&camera);
 	}
 
-	glm::mat4 model;
-	glm::mat4 shadeMod;
+	//set clear color
 	glClearColor(0, 0, 0, 0);
+
+	//timing
+	float lastFrame = 0.0f;
+	float currentFrame = 0.0f;
 
 	// game loop
 	// -----------
@@ -250,7 +250,7 @@ int main()
 	{
 		// per-frame time logic
 		// --------------------
-		float currentFrame = glfwGetTime();
+		currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
