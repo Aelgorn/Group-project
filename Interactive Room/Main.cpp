@@ -16,6 +16,7 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void selectObject(double x, double y);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -28,6 +29,10 @@ Camera camera(scaling * glm::vec3(2280, 260, -121.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
+// view/projection transformations
+glm::mat4 projection;
+glm::mat4 view;
+
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -35,6 +40,14 @@ float lastFrame = 0.0f;
 //pointer to selected object
 Model *selected;
 vector<Model*> Model::models;
+
+//shader pointers to switch between shaders in functions
+Shader* general;
+Shader* selection;
+//boolean determining wether an object is selected or not
+bool isSelected;
+
+GLFWwindow* window;
 int main()
 {
 	// glfw: initialize and configure
@@ -46,7 +59,7 @@ int main()
 	glfwWindowHint(GLFW_SAMPLES, 8);
 	// glfw window creation
 	// --------------------
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House", NULL, NULL);
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -87,11 +100,12 @@ int main()
 	//set vertical sync to prevent screen tearing
 	glfwSwapInterval(1);
 
-	// build and compile shaders
-	// -------------------------
-
+	//shaders
 	Shader generalShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
-
+	general = &generalShader;
+	//Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
+	Shader selectionShader("Shaders/general_vert.shader", "Shaders/selection_frag.shader");
+	selection = &selectionShader;
 	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
 
 	generalShader.use();
@@ -218,14 +232,13 @@ int main()
 	//sets the shader that each model is going to use.
 	//That way, when a model is selected, it would be easier to switch its shader without affecting the other models or complicating the code
 	for (int i = 0; i < Model::models.size(); ++i) {
-		(*(Model::models[i])).setShader(&generalShader);
+		(*(Model::models[i])).setShader(general);
 		(*(Model::models[i])).setCamera(&camera);
 	}
 
-	selected = &plant;
 	glm::mat4 model;
 	glm::mat4 shadeMod;
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 0);
 
 	// game loop
 	// -----------
@@ -245,9 +258,6 @@ int main()
 		// render
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
 
 		//skyBoxShader.use();
 		//glActiveTexture(GL_TEXTURE1);
@@ -260,9 +270,14 @@ int main()
 		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 		generalShader.use();
-
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
 		generalShader.setMat4("projection", projection);
 		generalShader.setMat4("view", view);
+		selectionShader.use();
+		selectionShader.setMat4("projection", projection);
+		selectionShader.setMat4("view", view);
+
 		// render the loaded models
 		//kitchen
 		kitchen.Draw();
@@ -320,33 +335,38 @@ void processInput(GLFWwindow *window)
 		camera.ProcessMovement(MOVE_LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessMovement(MOVE_RIGHT, deltaTime);
-	if (rotating) {
-		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_UP_LEFT);
-		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_UP_RIGHT);
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_UP);
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_DOWN);
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_LEFT);
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			(*selected).rotate(ROTATE_RIGHT);
-	}
-	else {
-		if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-			(*selected).shift(SHIFT_UP);
-		if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-			(*selected).shift(SHIFT_DOWN);
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-			(*selected).shift(SHIFT_FORWARD);
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			(*selected).shift(SHIFT_BACKWARD);
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			(*selected).shift(SHIFT_LEFT);
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			(*selected).shift(SHIFT_RIGHT);
+	if (isSelected)
+	{
+		if (rotating)
+		{
+			if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_UP_LEFT);
+			if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_UP_RIGHT);
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_UP);
+			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_DOWN);
+			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_LEFT);
+			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+				(*selected).rotate(ROTATE_RIGHT);
+		}
+		else
+		{
+			if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+				(*selected).shift(SHIFT_UP);
+			if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+				(*selected).shift(SHIFT_DOWN);
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+				(*selected).shift(SHIFT_FORWARD);
+			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+				(*selected).shift(SHIFT_BACKWARD);
+			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+				(*selected).shift(SHIFT_LEFT);
+			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+				(*selected).shift(SHIFT_RIGHT);
+		}
 	}
 }
 
@@ -376,7 +396,7 @@ void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 	height = h;
 	glViewport(0, 0, width, height);
 }
-
+//determines whether camera should follow mouse movement or not
 bool processCam = false;
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
@@ -388,6 +408,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		processCam = false;
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		selectObject(xpos, ypos);
 	}
 }
 
@@ -411,4 +436,41 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(yoffset);
+}
+
+void selectObject(double x, double y) {
+	unsigned int col[4];
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	(*selection).use();
+	(*selection).setMat4("projection", projection);
+	(*selection).setMat4("view", view);
+	for (int i = 0; i < Model::models.size(); ++i) {
+		(*(Model::models[i])).setShader(selection);
+		(*(Model::models[i])).Draw();
+	}
+
+	glReadPixels(x, height - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &col);
+	//for some reason the function does r*255+4278190080... oh well
+	switch (col[0] - 4278190080) {
+	case 0:
+	case 6:
+	case 26:
+	case 27:
+	case 28:
+		isSelected = false;
+		selected = nullptr;
+		break;
+	default:
+		isSelected = true;
+		selected = Model::models[col[0] - 4278190080 - 1];
+		break;
+	}
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	(*general).use();
+	for (int i = 0; i < Model::models.size(); ++i) {
+		(*(Model::models[i])).setShader(general);
+		if (isSelected)
+			(*selected).setShader(selection);
+	}
 }

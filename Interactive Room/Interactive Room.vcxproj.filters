@@ -55,5 +55,11 @@
     <None Include="Shaders\skybox_vertex.shader">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\selection_frag.shader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\selection_vert.shader">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

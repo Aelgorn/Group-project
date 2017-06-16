@@ -38,7 +38,6 @@ enum Rotate {
 };
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
-void printMat(mat4 mat, int col);
 
 class Model
 {
@@ -55,6 +54,7 @@ public:
 	const float angle = 1.f;
 	//stores all models to make shader switching easier
 	static vector<Model*> models;
+	int ID;
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
@@ -63,14 +63,16 @@ public:
 		this->scale = scale;
 		model_matrix = glm::scale(mat4(1), vec3(scale));
 		loadModel(path);
-		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin),0);
+		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin), 0);
 		models.push_back(this);
+		ID = models.size();
 	}
 
 	// draws the model, and thus all its meshes
 	void Draw()
 	{
 		(*shade).use();
+		(*shade).setInt("id", ID);
 		(*shade).setMat4("model", model_matrix);
 		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].Draw(*shade);
@@ -86,33 +88,30 @@ public:
 	void shift(Shift direction) {
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin += vec4(scale*step*(*cam).Up,0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix))/scale*vec4(step*(*cam).Up,0)));
+			displacementFromOrigin += scale *step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale *step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin -= vec4(scale*step*(*cam).Up, 0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix)) / scale*vec4(-step*(*cam).Up, 0)));
+			displacementFromOrigin += scale* -step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale* -step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin -= vec4(scale*step*(*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix)) / scale*vec4(-step*(*cam).Right, 0)));
+			displacementFromOrigin += scale*-step*vec4((*cam).Right, 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*-step*vec4((*cam).Right, 0)));
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin += vec4(scale*step*(*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix)) / scale*vec4(step*(*cam).Right, 0)));
+			displacementFromOrigin += scale*step*vec4((*cam).Right, 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*step*vec4((*cam).Right, 0)));
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin += vec4(scale*step*(*cam).Front, 0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix)) / scale*vec4(step*(*cam).Front, 0)));
+			displacementFromOrigin += scale*step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin -= vec4(scale*step*(*cam).Front, 0);
-			model_matrix = translate(model_matrix, vec3(transpose((model_matrix)) / scale*vec4(-step*(*cam).Front, 0)));
+			displacementFromOrigin += scale*-step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*-step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
 			break;
 		}
-		cout << displacementFromOrigin.x << " : " << displacementFromOrigin.y << " : " << displacementFromOrigin.z << endl;
-		cout << "mat ";
-		printMat(model_matrix, 3);
 	}
 
 	//rotates an object in the direction specified
@@ -142,20 +141,6 @@ public:
 			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 0, 1));
 			break;
 		}
-
-		coordinates[0] = coordinates[0] * (mat3(rotation));
-		coordinates[1] = coordinates[1] * (mat3(rotation));
-		coordinates[2] = coordinates[2] * (mat3(rotation));
-		for (int i = 0; i < 3; ++i) {
-			for (int j = 0; j < 3; ++j) {
-				cout << coordinates[i][j] << " : ";
-			}
-			cout << endl;
-		}
-
-		//model_matrix *= rotation;
-		//model_matrix *= translate(mat4(1), displace);
-
 		model_matrix = transBack * rotation * trans * model_matrix;
 	}
 
@@ -165,13 +150,11 @@ public:
 	}
 
 	//sets the Camera that will be used for relative shift
-	void setCamera(Camera* camera){
+	void setCamera(Camera* camera) {
 		cam = camera;
 	}
 
 private:
-	//internal coordinate system to keep track of the rotation and shift accordingly
-	vec3 coordinates[3] = { vec3(1,0,0), vec3(0,1,0), vec3(0,0,1) };
 	//rotation matrix
 	mat4 rotation;
 	//model matrix used to rotate and shift Model object
@@ -415,12 +398,5 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
 	}
 
 	return textureID;
-}
-
-void printMat(mat4 mat, int col) {
-	for (int i = 0; i < 3; ++i) {
-		cout << ": " << mat[col][i] << " ";
-	}
-	cout << endl;
 }
 #endif
