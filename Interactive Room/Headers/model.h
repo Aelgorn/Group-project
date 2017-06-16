@@ -49,9 +49,9 @@ public:
 	string directory;
 	bool gammaCorrection;
 	//steps to translate
-	const float step = 10.f;
+	const float step = 5.f;
 	//angle of rotation
-	const float angle = 1.f;
+	const float angle = 1.5f;
 	//stores all models to make shader switching easier
 	static vector<Model*> models;
 	int ID;
@@ -88,57 +88,59 @@ public:
 	void shift(Shift direction) {
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin += scale *step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale *step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			displacementFromOrigin += scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin += scale* -step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale* -step*vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			displacementFromOrigin += scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin += scale*-step*vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*-step*vec4((*cam).Right, 0)));
+			displacementFromOrigin += scale * -step * vec4((*cam).Right, 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4((*cam).Right, 0)));
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin += scale*step*vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*step*vec4((*cam).Right, 0)));
+			displacementFromOrigin += scale * step * vec4((*cam).Right, 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4((*cam).Right, 0)));
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin += scale*step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			displacementFromOrigin += scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin += scale*-step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale*-step*vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			displacementFromOrigin += scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
+			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
 			break;
 		}
 	}
 
 	//rotates an object in the direction specified
 	void rotate(Rotate direction) {
-		glm::mat4 trans;
-		glm::mat4 transBack;
-		//model_matrix = translate(model_matrix, -displacementFromOrigin);
+		mat4 rotation;
+		mat4 trans;
+		mat4 transBack;
+
 		trans = translate(trans, -vec3(displacementFromOrigin));
 		transBack = translate(transBack, vec3(displacementFromOrigin));
+
 		switch (direction) {
 		case ROTATE_UP:
-			rotation = glm::rotate(mat4(1), radians(angle), vec3(1, 0, 0));
+			rotation = glm::rotate(mat4(1), radians(angle), (*cam).Right);
 			break;
 		case ROTATE_DOWN:
-			rotation = glm::rotate(mat4(1), radians(-angle), vec3(1, 0, 0));
+			rotation = glm::rotate(mat4(1), radians(-angle), (*cam).Right);
 			break;
 		case ROTATE_LEFT:
-			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 1, 0));
+			rotation = glm::rotate(mat4(1), radians(-angle), normalize(vec3(0, (*cam).Up.y, 0)));
 			break;
 		case ROTATE_RIGHT:
-			rotation = glm::rotate(mat4(1), radians(angle), vec3(0, 1, 0));
+			rotation = glm::rotate(mat4(1), radians(angle), normalize(vec3(0, (*cam).Up.y, 0)));
 			break;
 		case ROTATE_UP_LEFT:
-			rotation = glm::rotate(mat4(1), radians(angle), vec3(0, 0, 1));
+			rotation = glm::rotate(mat4(1), radians(angle), normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)));
 			break;
 		case ROTATE_UP_RIGHT:
-			rotation = glm::rotate(mat4(1), radians(-angle), vec3(0, 0, 1));
+			rotation = glm::rotate(mat4(1), radians(-angle), normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)));
 			break;
 		}
 		model_matrix = transBack * rotation * trans * model_matrix;
@@ -149,14 +151,12 @@ public:
 		shade = shader;
 	}
 
-	//sets the Camera that will be used for relative shift
+	//sets the Camera that will be used for relative transformations
 	void setCamera(Camera* camera) {
 		cam = camera;
 	}
 
 private:
-	//rotation matrix
-	mat4 rotation;
 	//model matrix used to rotate and shift Model object
 	mat4 model_matrix;
 	//used to get the location of the center of an object in order to rotate it
@@ -166,7 +166,7 @@ private:
 	bool first = true;
 	//makes drawing objects and switching shaders more seamless
 	Shader* shade;
-	//Camera holder to shift according to camera
+	//Camera holder to shift and rotate according to camera
 	Camera* cam;
 
 	/*  Functions   */

@@ -79,8 +79,6 @@ public:
 			Position.z += Right.z * speed;
 			break;
 		}
-		//for debugging purposes
-		std::cout << Position.x << " : " << Position.y << " : " << Position.z << '\n';
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

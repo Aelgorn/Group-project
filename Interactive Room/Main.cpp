@@ -39,6 +39,9 @@ float lastFrame = 0.0f;
 
 //pointer to selected object
 Model *selected;
+
+//for some reason C++ wants other classes' static datatypes to be declared globally if we're going to use them.
+// who the f made that design decision???
 vector<Model*> Model::models;
 
 //shader pointers to switch between shaders in functions
@@ -47,7 +50,6 @@ Shader* selection;
 //boolean determining wether an object is selected or not
 bool isSelected;
 
-GLFWwindow* window;
 int main()
 {
 	// glfw: initialize and configure
@@ -59,7 +61,7 @@ int main()
 	glfwWindowHint(GLFW_SAMPLES, 8);
 	// glfw window creation
 	// --------------------
-	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -103,8 +105,8 @@ int main()
 	//shaders
 	Shader generalShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
 	general = &generalShader;
-	//Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
-	Shader selectionShader("Shaders/general_vert.shader", "Shaders/selection_frag.shader");
+	Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
+	//Shader selectionShader("Shaders/general_vert.shader", "Shaders/selection_frag.shader");
 	selection = &selectionShader;
 	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
 
