@@ -47,7 +47,7 @@ vector<Model*> Model::models;
 //shader pointers to switch between shaders in functions
 Shader* general;
 Shader* selection;
-//boolean determining wether an object is selected or not
+//boolean determining whether an object is selected or not
 bool isSelected;
 
 int main()
@@ -106,7 +106,6 @@ int main()
 	Shader generalShader("Shaders/general_vert.shader", "Shaders/general_frag.shader");
 	general = &generalShader;
 	Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
-	//Shader selectionShader("Shaders/general_vert.shader", "Shaders/selection_frag.shader");
 	selection = &selectionShader;
 	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
 
@@ -137,6 +136,8 @@ int main()
 	//	SOIL_FLAG_MIPMAPS
 	//);
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
+	//number of objects to load, hard-coded
 	int objNum = 28;
 	//bedroom
 	Model bed("Models/bed/bed.obj");
@@ -177,9 +178,6 @@ int main()
 	Model kettle("Models/kitchen/kettle.obj");
 	cout << "kettle loaded,\t\tposition -> " << kettle.displacement().x << " : " << kettle.displacement().y << " : " << kettle.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
-	Model blender("Models/kitchen/blender.obj");
-	cout << "blender loaded,\t\tposition -> " << blender.displacement().x << " : " << blender.displacement().y << " : " << blender.displacement().z << ".\t\t";
-	cout << "Objects left: " << --objNum << '\n';
 	Model gun("Models/kitchen/gun.obj");
 	cout << "gun loaded,\t\tposition -> " << gun.displacement().x << " : " << gun.displacement().y << " : " << gun.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
@@ -203,12 +201,6 @@ int main()
 	Model tray("Models/living/tray.obj");
 	cout << "tray loaded,\t\tposition -> " << tray.displacement().x << " : " << tray.displacement().y << " : " << tray.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
-	Model glass1("Models/living/glass 1.obj");
-	cout << "glass 1 loaded,\t\tposition -> " << glass1.displacement().x << " : " << glass1.displacement().y << " : " << glass1.displacement().z << ".\t\t";
-	cout << "Objects left: " << --objNum << '\n';
-	Model glass2("Models/living/glass 2.obj");
-	cout << "glass 2 loaded,\t\tposition -> " << glass2.displacement().x << " : " << glass2.displacement().y << " : " << glass2.displacement().z << ".\t\t";
-	cout << "Objects left: " << --objNum << '\n';
 	Model laptop("Models/living/laptop.obj");
 	cout << "laptop loaded,\t\tposition -> " << laptop.displacement().x << " : " << laptop.displacement().y << " : " << laptop.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
@@ -223,8 +215,19 @@ int main()
 	Model house("Models/house/house.obj");
 	cout << "house loaded,\t\tposition -> " << house.displacement().x << " : " << house.displacement().y << " : " << house.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
+
+	//transparent objects
 	Model lamps("Models/house/lamps.obj");
 	cout << "lamps loaded,\t\tposition -> " << lamps.displacement().x << " : " << lamps.displacement().y << " : " << lamps.displacement().z << ".\t\t";
+	cout << "Objects left: " << --objNum << '\n';
+	Model blender("Models/kitchen/blender.obj");
+	cout << "blender loaded,\t\tposition -> " << blender.displacement().x << " : " << blender.displacement().y << " : " << blender.displacement().z << ".\t\t";
+	cout << "Objects left: " << --objNum << '\n';
+	Model glass1("Models/living/glass 1.obj");
+	cout << "glass 1 loaded,\t\tposition -> " << glass1.displacement().x << " : " << glass1.displacement().y << " : " << glass1.displacement().z << ".\t\t";
+	cout << "Objects left: " << --objNum << '\n';
+	Model glass2("Models/living/glass 2.obj");
+	cout << "glass 2 loaded,\t\tposition -> " << glass2.displacement().x << " : " << glass2.displacement().y << " : " << glass2.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model windows("Models/house/windows.obj");
 	cout << "windows loaded,\t\tposition -> " << windows.displacement().x << " : " << windows.displacement().y << " : " << windows.displacement().z << ".\t\t";
@@ -232,7 +235,6 @@ int main()
 	//Model skyBox("Models/cube.obj");
 
 	//sets the shader that each model is going to use.
-	//That way, when a model is selected, it would be easier to switch its shader without affecting the other models or complicating the code
 	for (int i = 0; i < Model::models.size(); ++i) {
 		(*(Model::models[i])).setShader(general);
 		(*(Model::models[i])).setCamera(&camera);
@@ -257,9 +259,29 @@ int main()
 		processInput(window);
 		glfwPollEvents();
 
+		// update view and projection
+		// --------------------------
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
+
+		// update shaders with view and projection
+		// ---------------------------------------
+		generalShader.use();
+		generalShader.setMat4("projection", projection);
+		generalShader.setMat4("view", view);
+		if (isSelected) {
+			selectionShader.use();
+			selectionShader.setMat4("projection", projection);
+			selectionShader.setMat4("view", view);
+		}
+
 		// render
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		for (int i = 0; i < Model::models.size(); ++i) {
+			(*(Model::models[i])).Draw();
+		}
 
 		//skyBoxShader.use();
 		//glActiveTexture(GL_TEXTURE1);
@@ -271,49 +293,6 @@ int main()
 		//glDepthMask(GL_TRUE);
 		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-		generalShader.use();
-		view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)width / (float)height, 0.1f, 100.0f);
-		generalShader.setMat4("projection", projection);
-		generalShader.setMat4("view", view);
-		selectionShader.use();
-		selectionShader.setMat4("projection", projection);
-		selectionShader.setMat4("view", view);
-
-		// render the loaded models
-		//kitchen
-		kitchen.Draw();
-		kitchenTable.Draw();
-		kitchenChair1.Draw();
-		kitchenChair2.Draw();
-		kitchenChair3.Draw();
-		kitchenChair4.Draw();
-		kettle.Draw();
-		gun.Draw();
-		apples.Draw();
-		//bedroom
-		bed.Draw();
-		ironman.Draw();
-		wardrobe.Draw();
-		nightstand.Draw();
-		phone.Draw();
-		//living room
-		tv.Draw();
-		couch.Draw();
-		coffeTable.Draw();
-		tablePlant.Draw();
-		tray.Draw();
-		laptop.Draw();
-		plant.Draw();
-		dragon.Draw();
-		//house
-		house.Draw();
-		//transparent objects
-		lamps.Draw();
-		blender.Draw();
-		glass1.Draw();
-		glass2.Draw();
-		windows.Draw();
 		// glfw: swap buffers
 		// ------------------
 		glfwSwapBuffers(window);
@@ -324,9 +303,10 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+//determines whether rotating or shifting
 bool rotating = false;
-// process all camera input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
+// process all input that needs instant and continuous response
+// ------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -371,17 +351,12 @@ void processInput(GLFWwindow *window)
 		}
 	}
 }
-
+// Process all input that doesn't need continuous response
+// -------------------------------------------------------
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	if (key == GLFW_KEY_ESCAPE &&action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	if (key == GLFW_KEY_L &&action == GLFW_PRESS)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	if (key == GLFW_KEY_T && action == GLFW_PRESS)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 		rotating = true;
 	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
@@ -392,14 +367,15 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
-	// make sure the viewport matches the new window dimensions; note that width and
-	// height will be significantly larger than specified on retina displays.
+	// make sure the viewport matches the new window dimensions
 	width = w;
 	height = h;
 	glViewport(0, 0, width, height);
 }
 //determines whether camera should follow mouse movement or not
 bool processCam = false;
+// Process all mouse input
+// -----------------------
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		double xpos, ypos;
@@ -418,8 +394,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
+// Whenever the mouse moves, this callback is called
+// -------------------------------------------------
 void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (processCam) {
@@ -433,43 +409,50 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 	}
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
+// whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(yoffset);
 }
 
+// this function selects the object the user clicked on
+// ----------------------------------------------------
 void selectObject(double x, double y) {
 	unsigned int col[4];
-
+	//clear frame buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	(*selection).use();
 	(*selection).setMat4("projection", projection);
 	(*selection).setMat4("view", view);
+	// draw all objects with their id as a parameter for their color
 	for (int i = 0; i < Model::models.size(); ++i) {
 		(*(Model::models[i])).setShader(selection);
 		(*(Model::models[i])).Draw();
 	}
-
+	//get the color of the pixel which the user clicked on
 	glReadPixels(x, height - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &col);
 	//for some reason the function does r*255+4278190080... oh well
 	switch (col[0] - 4278190080) {
+	//don't select immovable objects, such as windows, lamps, house, and emptyness
 	case 0:
 	case 6:
-	case 26:
-	case 27:
+	case 23:
+	case 24:
 	case 28:
+		//deselect object
 		isSelected = false;
 		selected = nullptr;
 		break;
 	default:
+		//select object
 		isSelected = true;
 		selected = Model::models[col[0] - 4278190080 - 1];
 		break;
 	}
+	//clear frame buffer again
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	(*general).use();
+	//set the usual shader for all objects except selected one
 	for (int i = 0; i < Model::models.size(); ++i) {
 		(*(Model::models[i])).setShader(general);
 		if (isSelected)

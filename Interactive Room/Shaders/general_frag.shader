@@ -37,12 +37,13 @@ void main()
 	float livLamp2Diff = max(dot(norm, livLamp2Dir), 0);
 	float bedLampDiff = max(dot(norm, bedLampDir), 0);
 	float kitchLampDiff = max(dot(norm, kitchLampDir), 0);
-	//light
+	//ambiant light
 	vec3 ambiant = ambientStrength * lampLightColor;
+	//diffuse light
 	vec3 livLamp1Light = attenuationLivLamp1 * livLamp1Diff * lampLightColor;
 	vec3 livLamp2Light = attenuationLivLamp2 * livLamp2Diff * lampLightColor;
 	vec3 bedLampLight = attenuationBedLamp * bedLampDiff * lampLightColor;
 	vec3 kitchLampLight = attenuationKitchLamp * kitchLampDiff * lampLightColor;
-
+	//final color
 	FragColor = vec4(ambiant + livLamp1Light + livLamp2Light + bedLampLight + kitchLampLight, 1) * texture(texture_diffuse1, TexCoords);
 }
