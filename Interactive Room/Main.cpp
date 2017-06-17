@@ -285,14 +285,7 @@ int main()
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//drawEnvironment();
-		glDepthMask(GL_FALSE);
-		skybox->use();
-		glBindVertexArray(skyboxVAO);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		glDepthMask(GL_TRUE);
+		drawEnvironment();
 
 		for (int i = 0; i < Model::models.size(); ++i) {
 			(*(Model::models[i])).Draw();
@@ -469,48 +462,48 @@ void selectObject(double x, double y) {
 void loadSkybox(vector<string> faces)
 {
 	//Skybox vertices
-	float vertices[] = {
-	  -100.0f,  100.0f, -100.0f,
-	  -100.0f, -100.0f, -100.0f,
-	   100.0f, -100.0f, -100.0f,
-	   100.0f, -100.0f, -100.0f,
-	   100.0f,  100.0f, -100.0f,
-	  -100.0f,  100.0f, -100.0f,
+	float skybox_vertices[] = {
+	  -99.0f,  99.0f, -99.0f,
+	  -99.0f, -99.0f, -99.0f,
+	   99.0f, -99.0f, -99.0f,
+	   99.0f, -99.0f, -99.0f,
+	   99.0f,  99.0f, -99.0f,
+	  -99.0f,  99.0f, -99.0f,
   
-	  -100.0f, -100.0f,  100.0f,
-	  -100.0f, -100.0f, -100.0f,
-	  -100.0f,  100.0f, -100.0f,
-	  -100.0f,  100.0f, -100.0f,
-	  -100.0f,  100.0f,  100.0f,
-	  -100.0f, -100.0f,  100.0f,
+	  -99.0f, -99.0f,  99.0f,
+	  -99.0f, -99.0f, -99.0f,
+	  -99.0f,  99.0f, -99.0f,
+	  -99.0f,  99.0f, -99.0f,
+	  -99.0f,  99.0f,  99.0f,
+	  -99.0f, -99.0f,  99.0f,
   
-	   100.0f, -100.0f, -100.0f,
-	   100.0f, -100.0f,  100.0f,
-	   100.0f,  100.0f,  100.0f,
-	   100.0f,  100.0f,  100.0f,
-	   100.0f,  100.0f, -100.0f,
-	   100.0f, -100.0f, -100.0f,
+	   99.0f, -99.0f, -99.0f,
+	   99.0f, -99.0f,  99.0f,
+	   99.0f,  99.0f,  99.0f,
+	   99.0f,  99.0f,  99.0f,
+	   99.0f,  99.0f, -99.0f,
+	   99.0f, -99.0f, -99.0f,
    
-	  -100.0f, -100.0f,  100.0f,
-	  -100.0f,  100.0f,  100.0f,
-	   100.0f,  100.0f,  100.0f,
-	   100.0f,  100.0f,  100.0f,
-	   100.0f, -100.0f,  100.0f,
-	  -100.0f, -100.0f,  100.0f,
+	  -99.0f, -99.0f,  99.0f,
+	  -99.0f,  99.0f,  99.0f,
+	   99.0f,  99.0f,  99.0f,
+	   99.0f,  99.0f,  99.0f,
+	   99.0f, -99.0f,  99.0f,
+	  -99.0f, -99.0f,  99.0f,
   
-	  -100.0f,  100.0f, -100.0f,
-	   100.0f,  100.0f, -100.0f,
-	   100.0f,  100.0f,  100.0f,
-	   100.0f,  100.0f,  100.0f,
-	  -100.0f,  100.0f,  100.0f,
-	  -100.0f,  100.0f, -100.0f,
+	  -99.0f,  99.0f, -99.0f,
+	   99.0f,  99.0f, -99.0f,
+	   99.0f,  99.0f,  99.0f,
+	   99.0f,  99.0f,  99.0f,
+	  -99.0f,  99.0f,  99.0f,
+	  -99.0f,  99.0f, -99.0f,
   
-	  -100.0f, -100.0f, -100.0f,
-	  -100.0f, -100.0f,  100.0f,
-	   100.0f, -100.0f, -100.0f,
-	   100.0f, -100.0f, -100.0f,
-	  -100.0f, -100.0f,  100.0f,
-	   100.0f, -100.0f,  100.0f
+	  -99.0f, -99.0f, -99.0f,
+	  -99.0f, -99.0f,  99.0f,
+	   99.0f, -99.0f, -99.0f,
+	   99.0f, -99.0f, -99.0f,
+	  -99.0f, -99.0f,  99.0f,
+	   99.0f, -99.0f,  99.0f
 	};
 
 	glGenVertexArrays(1, &skyboxVAO);
@@ -521,7 +514,7 @@ void loadSkybox(vector<string> faces)
 
 	glGenBuffers(1, &skyboxVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &skybox_vertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -572,7 +565,7 @@ void drawEnvironment()
 	glDepthMask(GL_FALSE);
 	skybox->use();
 	glBindVertexArray(skyboxVAO);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthMask(GL_TRUE);
