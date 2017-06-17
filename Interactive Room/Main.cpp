@@ -1,7 +1,8 @@
+//glew, glfw, glm
 #include "glew.h"
 #include "glfw3.h"
 #include "glm.hpp"
-
+//custom classes
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
@@ -303,6 +304,7 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+
 //determines whether rotating or shifting
 bool rotating = false;
 // process all input that needs instant and continuous response
@@ -351,6 +353,7 @@ void processInput(GLFWwindow *window)
 		}
 	}
 }
+
 // Process all input that doesn't need continuous response
 // -------------------------------------------------------
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -372,6 +375,7 @@ void framebuffer_size_callback(GLFWwindow* window, int w, int h)
 	height = h;
 	glViewport(0, 0, width, height);
 }
+
 //determines whether camera should follow mouse movement or not
 bool processCam = false;
 // Process all mouse input
@@ -422,6 +426,8 @@ void selectObject(double x, double y) {
 	unsigned int col[4];
 	//clear frame buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//switch shaders
 	(*selection).use();
 	(*selection).setMat4("projection", projection);
 	(*selection).setMat4("view", view);
@@ -430,8 +436,10 @@ void selectObject(double x, double y) {
 		(*(Model::models[i])).setShader(selection);
 		(*(Model::models[i])).Draw();
 	}
+
 	//get the color of the pixel which the user clicked on
 	glReadPixels(x, height - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &col);
+
 	//for some reason the function does r*255+4278190080... oh well
 	switch (col[0] - 4278190080) {
 	//don't select immovable objects, such as windows, lamps, house, and emptyness
@@ -450,12 +458,13 @@ void selectObject(double x, double y) {
 		selected = Model::models[col[0] - 4278190080 - 1];
 		break;
 	}
+
 	//clear frame buffer again
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	//set the usual shader for all objects except selected one
-	for (int i = 0; i < Model::models.size(); ++i) {
+	for (int i = 0; i < Model::models.size(); ++i)
 		(*(Model::models[i])).setShader(general);
-		if (isSelected)
-			(*selected).setShader(selection);
-	}
+	if (isSelected)
+		(*selected).setShader(selection);
 }
