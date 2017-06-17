@@ -5,7 +5,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
-
+#include <SOIL.h>
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -15,6 +15,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void selectObject(double x, double y);
+void loadSkybox(vector<string> faces);
+void drawEnvironment();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -44,6 +46,11 @@ vector<Model*> Model::models;
 //shader pointers to switch between shaders in functions
 Shader* general;
 Shader* selection;
+Shader* skybox;
+
+//Skybox Attributes
+GLuint skyboxVAO, skyboxVBO, skyboxTexture;
+
 //boolean determining whether an object is selected or not
 bool isSelected;
 
@@ -104,7 +111,8 @@ int main()
 	general = &generalShader;
 	Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
 	selection = &selectionShader;
-	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+	Shader skyboxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+	skybox = &skyboxShader;
 
 	generalShader.use();
 	// scaled light positions
@@ -118,21 +126,19 @@ int main()
 	generalShader.setVec3("bedLamp", bedLamp);
 	generalShader.setVec3("kitchLamp", kitchLamp);
 
+	//Load the skybox
+	vector<string> skybox_faces = {
+									"Models/skybox/W.png",
+									"Models/skybox/N.png",
+									"Models/skybox/E.png",
+									"Models/skybox/S.png",
+									"Models/skybox/U.png",
+									"Models/skybox/D.png"
+	};
+	loadSkybox(skybox_faces);
+
 	// load models
 	// -----------
-
-	//GLuint skyboxTexture;
-	//glGenTextures(1, &skyboxTexture);
-
-	//skyboxTexture = SOIL_load_OGL_single_cubemap
-	//(
-	//	"Models/skybox.jpg",
-	//	"WNESUD",
-	//	SOIL_LOAD_AUTO,
-	//	SOIL_CREATE_NEW_ID,
-	//	SOIL_FLAG_MIPMAPS
-	//);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 
 	//number of objects to load, hard-coded
 	int objNum = 28;
@@ -279,19 +285,19 @@ int main()
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		//drawEnvironment();
+		glDepthMask(GL_FALSE);
+		skybox->use();
+		glBindVertexArray(skyboxVAO);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		glDepthMask(GL_TRUE);
+
 		for (int i = 0; i < Model::models.size(); ++i) {
 			(*(Model::models[i])).Draw();
 		}
 
-		//skyBoxShader.use();
-		//glActiveTexture(GL_TEXTURE1);
-		//skyBoxShader.setMat4("view_matrix", view);
-		//skyBoxShader.setMat4("projection_matrix", projection);
-		//skyBoxShader.setInt("skyboxTexture", skyboxTexture);
-		//glDepthMask(GL_FALSE);
-		//skyBox.Draw(skyBoxShader);
-		//glDepthMask(GL_TRUE);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 		// glfw: swap buffers
 		// ------------------
@@ -458,4 +464,116 @@ void selectObject(double x, double y) {
 		if (isSelected)
 			(*selected).setShader(selection);
 	}
+}
+
+void loadSkybox(vector<string> faces)
+{
+	//Skybox vertices
+	float vertices[] = {
+	  -100.0f,  100.0f, -100.0f,
+	  -100.0f, -100.0f, -100.0f,
+	   100.0f, -100.0f, -100.0f,
+	   100.0f, -100.0f, -100.0f,
+	   100.0f,  100.0f, -100.0f,
+	  -100.0f,  100.0f, -100.0f,
+  
+	  -100.0f, -100.0f,  100.0f,
+	  -100.0f, -100.0f, -100.0f,
+	  -100.0f,  100.0f, -100.0f,
+	  -100.0f,  100.0f, -100.0f,
+	  -100.0f,  100.0f,  100.0f,
+	  -100.0f, -100.0f,  100.0f,
+  
+	   100.0f, -100.0f, -100.0f,
+	   100.0f, -100.0f,  100.0f,
+	   100.0f,  100.0f,  100.0f,
+	   100.0f,  100.0f,  100.0f,
+	   100.0f,  100.0f, -100.0f,
+	   100.0f, -100.0f, -100.0f,
+   
+	  -100.0f, -100.0f,  100.0f,
+	  -100.0f,  100.0f,  100.0f,
+	   100.0f,  100.0f,  100.0f,
+	   100.0f,  100.0f,  100.0f,
+	   100.0f, -100.0f,  100.0f,
+	  -100.0f, -100.0f,  100.0f,
+  
+	  -100.0f,  100.0f, -100.0f,
+	   100.0f,  100.0f, -100.0f,
+	   100.0f,  100.0f,  100.0f,
+	   100.0f,  100.0f,  100.0f,
+	  -100.0f,  100.0f,  100.0f,
+	  -100.0f,  100.0f, -100.0f,
+  
+	  -100.0f, -100.0f, -100.0f,
+	  -100.0f, -100.0f,  100.0f,
+	   100.0f, -100.0f, -100.0f,
+	   100.0f, -100.0f, -100.0f,
+	  -100.0f, -100.0f,  100.0f,
+	   100.0f, -100.0f,  100.0f
+	};
+
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVAO);
+	
+
+	glGenBuffers(1, &skyboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	//Unbind the VAO
+	glBindVertexArray(0);
+
+	//Skybox texture
+	glGenTextures(1, &skyboxTexture);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
+	for (int i = 0; i < faces.size(); i++)
+	{
+		
+		int width, height, nrComponents;
+		unsigned char *data = SOIL_load_image(faces[i].c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
+		if (data)
+		{
+			GLenum format;
+			if (nrComponents == 1)
+				format = GL_RED;
+			else if (nrComponents == 3)
+				format = GL_RGB;
+			else if (nrComponents == 4)
+				format = GL_RGBA;
+
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+
+			SOIL_free_image_data(data);
+		}
+		else
+		{
+			cout << "Texture failed to load at path: " << faces[i] << endl;
+			cout << SOIL_last_result() << endl;
+			SOIL_free_image_data(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void drawEnvironment()
+{
+	glDepthMask(GL_FALSE);
+	skybox->use();
+	glBindVertexArray(skyboxVAO);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);
 }
