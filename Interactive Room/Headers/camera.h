@@ -49,7 +49,7 @@ public:
 		this->WorldUp  = up;
 		this->Yaw      = yaw;
 		this->Pitch    = pitch;
-		this->PlayerElipse = glm::vec3(1, 1, 1);
+		this->PlayerElipse = glm::vec3(1,1,1);
 		updateCameraVectors();
 	}
 
@@ -84,8 +84,11 @@ public:
 			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
-		CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
-		Position += velocity;
+		bool okToMove = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
+		if (okToMove)
+		{
+			Position += velocity;
+		}
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

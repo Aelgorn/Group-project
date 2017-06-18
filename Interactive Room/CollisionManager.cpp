@@ -19,7 +19,7 @@ CollisionManager* CollisionManager::getInstance()
 //Tracks the vertices bounding boxes of a model;
 void CollisionManager::trackModel(Model* model)
 {
-	std::cout << "Tracking a new model" << std::endl;
+	std::cout << "Tracking the added model" << std::endl;
 	tracked_models.push_back(model);
 }
 
@@ -105,7 +105,6 @@ bool CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 
 	packet.foundCollision = false;
 
-	std::cout << "Received a movement packed from " << R3position.x << ", " << R3position.y << ", " << R3position.z << "with directional velocity" << R3velocity.x << ", " << R3velocity.y << ", " << R3velocity.z << endl;
 	//Attempt to process the collision for each bounding box triangle
 	for (unsigned int i = 0; i < tracked_models.size(); i++)
 	{
@@ -130,7 +129,10 @@ bool CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 		checkTriangle(&packet, box[7], box[0], box[4]);
 		checkTriangle(&packet, box[7], box[3], box[0]);
 	}
-
+	if (packet.foundCollision == true)
+	{
+		return false;
+	}
 	return true;
 }
 

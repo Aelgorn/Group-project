@@ -138,9 +138,6 @@ int main()
 	//bedroom
 	Model bed("Models/bed/bed.obj");
 	
-	//Track the bed for collisions
-	CollisionManager::getInstance()->trackModel(&bed);
-
 	cout << "bed loaded,\t\tposition -> " << bed.displacement().x << " : " << bed.displacement().y << " : " << bed.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model ironman("Models/bed/ironman.obj");

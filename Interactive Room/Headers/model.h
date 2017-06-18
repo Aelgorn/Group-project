@@ -16,6 +16,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include "CollisionManager.h"
 
 
 using namespace glm;
@@ -68,6 +69,9 @@ public:
 		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin), 0);
 		models.push_back(this);
 		ID = models.size();
+
+		//Once a model is created, track it with the collision manager
+		CollisionManager::getInstance()->trackModel(this);
 	}
 
 	// draws the model, and thus all its meshes
