@@ -285,8 +285,6 @@ int main()
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		drawEnvironment();
-
 		for (int i = 0; i < Model::models.size(); ++i) {
 			(*(Model::models[i])).Draw();
 		}
@@ -509,22 +507,18 @@ void loadSkybox(vector<string> faces)
 	glGenVertexArrays(1, &skyboxVAO);
 	glBindVertexArray(skyboxVAO);
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVAO);
 	
-
 	glGenBuffers(1, &skyboxVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
 	glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &skybox_vertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
 	//Unbind the VAO
 	glBindVertexArray(0);
 
 	//Skybox texture
 	glGenTextures(1, &skyboxTexture);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-
 	for (int i = 0; i < faces.size(); i++)
 	{
 		
@@ -565,7 +559,7 @@ void drawEnvironment()
 	glDepthMask(GL_FALSE);
 	skybox->use();
 	glBindVertexArray(skyboxVAO);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthMask(GL_TRUE);
