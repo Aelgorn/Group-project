@@ -44,6 +44,7 @@ class Model
 public:
 	/*  Model Data */
 	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+	vector<vec3> bounding_box;
 	float scale;
 	vector<Mesh> meshes;
 	string directory;
@@ -86,6 +87,7 @@ public:
 
 	// shifts an object in the direction specified
 	void shift(Shift direction) {
+
 		switch (direction) {
 		case SHIFT_UP:
 			displacementFromOrigin += scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
@@ -112,10 +114,12 @@ public:
 			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
 			break;
 		}
+
 	}
 
 	//rotates an object in the direction specified
 	void rotate(Rotate direction) {
+
 		mat4 rotation;
 		mat4 trans;
 		mat4 transBack;
@@ -144,6 +148,7 @@ public:
 			break;
 		}
 		model_matrix = transBack * rotation * trans * model_matrix;
+
 	}
 
 	//sets the shader that will be used to draw the object
@@ -156,11 +161,16 @@ public:
 		cam = camera;
 	}
 
+	
+
+
 private:
 	//model matrix used to rotate and shift Model object
 	mat4 model_matrix;
 	//used to get the location of the center of an object in order to rotate it
 	vec4 displacementFromOrigin;
+	vec3 minBounds;
+	vec3 maxBounds;
 	float xmin, ymin, zmin, xmax, ymax, zmax;
 	//for first time setup of xmin ,ymin, zmin, xmax, ymax, and zmax
 	bool first = true;
@@ -289,6 +299,20 @@ private:
 			}
 			vertices.push_back(vertex);
 		}
+
+		// Using min and max values of x,y,z create a bounding box
+		// And apply the current model matrix to it
+		this->bounding_box = {
+			vec3(xmin, ymin, zmin), //Vertex 1: Front, bottom, left corner
+			vec3(xmin, ymax, zmin), //Vertex 2: Front, top, left corner
+			vec3(xmax, ymax, zmin), //Vertex 3: Front, top, right corner
+			vec3(xmax, ymin, zmin), //Vertex 4: Front, bottom, right corner
+			vec3(xmin, ymin, zmax), //Vertex 5: Back, bottom, left corner
+			vec3(xmin, ymax, zmax), //Vertex 6: Back, top, left corner
+			vec3(xmax, ymax, zmax), //Vertex 7: Back, top, right corner
+			vec3(xmax, ymin, zmax)  //Vertex 8: Back, bottom, right corner
+		};
+
 		// now walk through each of the mesh's faces (a face is a mesh's triangle) and retrieve the corresponding vertex indices.
 		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 		{
@@ -358,6 +382,23 @@ private:
 		}
 		return textures;
 	}
+
+	void clearModelFromBoundingBox(mat4 model_matrix)
+	{
+		for (unsigned int i = 0; i < this->bounding_box.size(); i++)
+		{
+			this->bounding_box[i] = vec3(inverse(model_matrix) * vec4(this->bounding_box[i], 1));
+		}
+	}
+
+	void applyModelToBoundingBox(mat4 model_matrix)
+	{
+		for (unsigned int i = 0; i < this->bounding_box.size(); i++)
+		{
+			this->bounding_box[i] = vec3(model_matrix * vec4(this->bounding_box[i], 1));
+		}
+	}
+
 };
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)

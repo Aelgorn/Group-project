@@ -35,6 +35,9 @@
     <ClInclude Include="Headers\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\general_frag.shader">

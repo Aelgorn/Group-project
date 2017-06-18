@@ -32,6 +32,7 @@ public:
 	glm::vec3 Up;
 	glm::vec3 Right;
 	glm::vec3 WorldUp;
+	glm::vec3 PlayerEllipse;
 	// Eular Angles
 	float Yaw;
 	float Pitch;
@@ -47,6 +48,7 @@ public:
 		this->WorldUp  = up;
 		this->Yaw      = yaw;
 		this->Pitch    = pitch;
+		this->PlayerEllipse = glm::vec3(1, 1, 1);
 		updateCameraVectors();
 	}
 
@@ -56,29 +58,32 @@ public:
 		return glm::lookAt(Position, Position + Front, Up);
 	}
 
+	glm::vec3 getPosition()
+	{
+		return Position;
+	}
+
 	// Processes movement. Uses Movement enum to keep independant from input type (keyboard, controller, mouse, etc).
 	void ProcessMovement(Movement direction, float steps)
 	{
 		float speed = MovementSpeed * steps;
+		glm::vec3 velocity;
 
 		switch (direction) {
 		case MOVE_FORWARD:
-			Position.x += Front.x * speed;
-			Position.z += Front.z * speed;
+			velocity = speed * glm::vec3(Front.x, 0.0f, Front.z);
 			break;
 		case MOVE_BACKWARD:
-			Position.x -= Front.x * speed;
-			Position.z -= Front.z * speed;
+			velocity = -speed * glm::vec3(Front.x, 0.0f, Front.z);
 			break;
 		case MOVE_LEFT:
-			Position.x -= Right.x * speed;
-			Position.z -= Right.z * speed;
+			velocity = -speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		case MOVE_RIGHT:
-			Position.x += Right.x * speed;
-			Position.z += Right.z * speed;
+			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
+		Position += velocity;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
