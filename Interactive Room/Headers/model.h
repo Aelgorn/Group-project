@@ -16,8 +16,11 @@
 #include <iostream>
 #include <map>
 #include <vector>
-using namespace std;
+
+
 using namespace glm;
+using namespace std;
+
 
 enum Shift {
 	SHIFT_UP,
@@ -36,8 +39,6 @@ enum Rotate {
 	ROTATE_UP_LEFT,
 	ROTATE_UP_RIGHT
 };
-
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
 class Model
 {
@@ -161,7 +162,17 @@ public:
 		cam = camera;
 	}
 
-	
+	//Apply the model matrix to each of bounding box's matrices and return the result
+	vector<vec3> getBoundingBox()
+	{
+		vector<vec3> result;
+		for (unsigned int i = 0; i < bounding_box.size(); i++)
+		{
+			result.push_back(vec3(model_matrix * vec4(bounding_box[i], 1)));
+		}
+
+		return result;
+	}
 
 
 private:
@@ -303,14 +314,14 @@ private:
 		// Using min and max values of x,y,z create a bounding box
 		// And apply the current model matrix to it
 		this->bounding_box = {
-			vec3(xmin, ymin, zmin), //Vertex 1: Front, bottom, left corner
-			vec3(xmin, ymax, zmin), //Vertex 2: Front, top, left corner
-			vec3(xmax, ymax, zmin), //Vertex 3: Front, top, right corner
-			vec3(xmax, ymin, zmin), //Vertex 4: Front, bottom, right corner
-			vec3(xmin, ymin, zmax), //Vertex 5: Back, bottom, left corner
-			vec3(xmin, ymax, zmax), //Vertex 6: Back, top, left corner
-			vec3(xmax, ymax, zmax), //Vertex 7: Back, top, right corner
-			vec3(xmax, ymin, zmax)  //Vertex 8: Back, bottom, right corner
+			vec3(xmin, ymin, zmin), //Vertex 0: Front, bottom, left corner
+			vec3(xmin, ymax, zmin), //Vertex 1: Front, top, left corner
+			vec3(xmax, ymax, zmin), //Vertex 2: Front, top, right corner
+			vec3(xmax, ymin, zmin), //Vertex 3: Front, bottom, right corner
+			vec3(xmin, ymin, zmax), //Vertex 4: Back, bottom, left corner
+			vec3(xmin, ymax, zmax), //Vertex 5: Back, top, left corner
+			vec3(xmax, ymax, zmax), //Vertex 6: Back, top, right corner
+			vec3(xmax, ymin, zmax)  //Vertex 7: Back, bottom, right corner
 		};
 
 		// now walk through each of the mesh's faces (a face is a mesh's triangle) and retrieve the corresponding vertex indices.
@@ -373,7 +384,7 @@ private:
 			if (!skip)
 			{   // if texture hasn't been loaded already, load it
 				Texture texture;
-				texture.id = TextureFromFile(str.C_Str(), this->directory);
+				texture.id = TextureFromFile(str.C_Str(), this->directory, false);
 				texture.type = typeName;
 				texture.path = str;
 				textures.push_back(texture);
@@ -383,61 +394,45 @@ private:
 		return textures;
 	}
 
-	void clearModelFromBoundingBox(mat4 model_matrix)
+	unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
 	{
-		for (unsigned int i = 0; i < this->bounding_box.size(); i++)
-		{
-			this->bounding_box[i] = vec3(inverse(model_matrix) * vec4(this->bounding_box[i], 1));
-		}
-	}
+		string filename = string(path);
+		filename = directory + '/' + filename;
 
-	void applyModelToBoundingBox(mat4 model_matrix)
-	{
-		for (unsigned int i = 0; i < this->bounding_box.size(); i++)
+		unsigned int textureID;
+		glGenTextures(1, &textureID);
+
+		int width, height, nrComponents;
+		unsigned char *data = SOIL_load_image(filename.c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
+		if (data)
 		{
-			this->bounding_box[i] = vec3(model_matrix * vec4(this->bounding_box[i], 1));
+			GLenum format;
+			if (nrComponents == 1)
+				format = GL_RED;
+			else if (nrComponents == 3)
+				format = GL_RGB;
+			else if (nrComponents == 4)
+				format = GL_RGBA;
+
+			glBindTexture(GL_TEXTURE_2D, textureID);
+			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			SOIL_free_image_data(data);
 		}
+		else
+		{
+			cout << "Texture failed to load at path: " << path << endl;
+			SOIL_free_image_data(data);
+		}
+
+		return textureID;
 	}
 
 };
-
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
-{
-	string filename = string(path);
-	filename = directory + '/' + filename;
-
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char *data = SOIL_load_image(filename.c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
-	if (data)
-	{
-		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		SOIL_free_image_data(data);
-	}
-	else
-	{
-		cout << "Texture failed to load at path: " << path << endl;
-		SOIL_free_image_data(data);
-	}
-
-	return textureID;
-}
 #endif

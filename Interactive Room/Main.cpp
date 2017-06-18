@@ -1,11 +1,10 @@
 #include "glew.h"
 #include "glfw3.h"
 #include "glm.hpp"
-
+#include "model.h"
 #include "shader.h"
 #include "camera.h"
-#include "model.h"
-
+#include "CollisionManager.h"
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -138,6 +137,10 @@ int main()
 	int objNum = 28;
 	//bedroom
 	Model bed("Models/bed/bed.obj");
+	
+	//Track the bed for collisions
+	CollisionManager::getInstance()->trackModel(&bed);
+
 	cout << "bed loaded,\t\tposition -> " << bed.displacement().x << " : " << bed.displacement().y << " : " << bed.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << '\n';
 	Model ironman("Models/bed/ironman.obj");

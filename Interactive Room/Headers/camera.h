@@ -4,6 +4,7 @@
 #include "glew.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
+#include "CollisionManager.h"
 #include <iostream>
 #include <vector>
 
@@ -32,7 +33,7 @@ public:
 	glm::vec3 Up;
 	glm::vec3 Right;
 	glm::vec3 WorldUp;
-	glm::vec3 PlayerEllipse;
+	glm::vec3 PlayerElipse;
 	// Eular Angles
 	float Yaw;
 	float Pitch;
@@ -48,7 +49,7 @@ public:
 		this->WorldUp  = up;
 		this->Yaw      = yaw;
 		this->Pitch    = pitch;
-		this->PlayerEllipse = glm::vec3(1, 1, 1);
+		this->PlayerElipse = glm::vec3(1, 1, 1);
 		updateCameraVectors();
 	}
 
@@ -83,6 +84,7 @@ public:
 			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
+		CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
 		Position += velocity;
 	}
 

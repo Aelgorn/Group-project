@@ -145,9 +145,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="CollisionManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="collision_math.h" />
+    <ClInclude Include="Header.h" />
     <ClInclude Include="Headers\camera.h" />
     <ClInclude Include="Headers\mesh.h" />
     <ClInclude Include="Headers\model.h" />
