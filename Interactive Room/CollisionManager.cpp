@@ -108,26 +108,28 @@ bool CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 	//Attempt to process the collision for each bounding box triangle
 	for (unsigned int i = 0; i < tracked_models.size(); i++)
 	{
-		std::vector<vec3> box = tracked_models[i]->getBoundingBox();
+		std::vector<vector<vec3>> box = tracked_models[i]->getBoundingBoxes();
 		//Front-facing triangles based on vertices as described in model.h
+		for (int i = 0; i < box.size(); ++i){
 		//Front face
-		checkTriangle(&packet, box[3], box[1], box[0]);
-		checkTriangle(&packet, box[3], box[4], box[1]);
+		checkTriangle(&packet, box[i][3], box[i][1], box[i][0]);
+		checkTriangle(&packet, box[i][3], box[i][4], box[i][1]);
 		//Back face
-		checkTriangle(&packet, box[4], box[6], box[7]);
-		checkTriangle(&packet, box[4], box[5], box[6]);
+		checkTriangle(&packet, box[i][4], box[i][6], box[i][7]);
+		checkTriangle(&packet, box[i][4], box[i][5], box[i][6]);
 		//Left face
-		checkTriangle(&packet, box[0], box[5], box[4]);
-		checkTriangle(&packet, box[0], box[1], box[5]);
+		checkTriangle(&packet, box[i][0], box[i][5], box[i][4]);
+		checkTriangle(&packet, box[i][0], box[i][1], box[i][5]);
 		//Right face
-		checkTriangle(&packet, box[7], box[2], box[3]);
-		checkTriangle(&packet, box[7], box[6], box[2]);
+		checkTriangle(&packet, box[i][7], box[i][2], box[i][3]);
+		checkTriangle(&packet, box[i][7], box[i][6], box[i][2]);
 		//Top face
-		checkTriangle(&packet, box[2], box[5], box[1]);
-		checkTriangle(&packet, box[2], box[6], box[5]);
+		checkTriangle(&packet, box[i][2], box[i][5], box[i][1]);
+		checkTriangle(&packet, box[i][2], box[i][6], box[i][5]);
 		//Bottom face
-		checkTriangle(&packet, box[7], box[0], box[4]);
-		checkTriangle(&packet, box[7], box[3], box[0]);
+		checkTriangle(&packet, box[i][7], box[i][0], box[i][4]);
+		checkTriangle(&packet, box[i][7], box[i][3], box[i][0]);
+		}
 	}
 	if (packet.foundCollision == true)
 	{

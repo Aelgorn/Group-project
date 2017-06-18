@@ -37,18 +37,19 @@ class Mesh {
 public:
 	/*  Mesh Data  */
 	vector<Vertex> vertices;
+	vector<glm::vec3> bounding_box;
 	vector<unsigned int> indices;
 	vector<Texture> textures;
 	unsigned int VAO;
 
 	/*  Functions  */
 	// constructor
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, vector<glm::vec3> bounding_box)
 	{
 		this->vertices = vertices;
 		this->indices = indices;
 		this->textures = textures;
-
+		this->bounding_box = bounding_box;
 		// now that we have all the required data, set the vertex buffers and its attribute pointers.
 		setupMesh();
 	}
@@ -90,6 +91,18 @@ public:
 
 		// always good practice to set everything back to defaults once configured.
 		glActiveTexture(GL_TEXTURE0);
+	}
+
+	//Apply the model matrix to each of bounding box's matrices and return the result
+	vector<glm::vec3> getBoundingBox(glm::mat4 * model_matrix)
+	{
+		vector<glm::vec3> result;
+		for (unsigned int i = 0; i < bounding_box.size(); i++)
+		{
+			result.push_back(glm::vec3((*model_matrix) * glm::vec4(bounding_box[i], 1)));
+		}
+
+		return result;
 	}
 
 private:

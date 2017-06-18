@@ -46,7 +46,6 @@ class Model
 public:
 	/*  Model Data */
 	vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-	vector<vec3> bounding_box;
 	float scale;
 	vector<Mesh> meshes;
 	string directory;
@@ -69,7 +68,6 @@ public:
 		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin), 0);
 		models.push_back(this);
 		ID = models.size();
-
 		//Once a model is created, track it with the collision manager
 		CollisionManager::getInstance()->trackModel(this);
 	}
@@ -167,15 +165,13 @@ public:
 	}
 
 	//Apply the model matrix to each of bounding box's matrices and return the result
-	vector<vec3> getBoundingBox()
+	vector<vector<vec3>> getBoundingBoxes()
 	{
-		vector<vec3> result;
-		for (unsigned int i = 0; i < bounding_box.size(); i++)
-		{
-			result.push_back(vec3(model_matrix * vec4(bounding_box[i], 1)));
+		vector<vector<vec3>> bound;
+		for (unsigned int i = 0; i < meshes.size(); i++) {
+			bound.push_back(meshes[i].getBoundingBox(&model_matrix));
 		}
-
-		return result;
+		return bound;
 	}
 
 
@@ -184,9 +180,7 @@ private:
 	mat4 model_matrix;
 	//used to get the location of the center of an object in order to rotate it
 	vec4 displacementFromOrigin;
-	vec3 minBounds;
-	vec3 maxBounds;
-	float xmin, ymin, zmin, xmax, ymax, zmax;
+	float xmin, ymin, zmin, xmax, ymax, zmax, xmeshmin, ymeshmin, zmeshmin, xmeshmax, ymeshmax, zmeshmax;
 	//for first time setup of xmin ,ymin, zmin, xmax, ymax, and zmax
 	bool first = true;
 	//makes drawing objects and switching shaders more seamless
@@ -235,6 +229,14 @@ private:
 	// processes mesh
 	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
+		//meshmin
+		xmeshmin = mesh->mVertices[0].x;
+		ymeshmin = mesh->mVertices[0].y;
+		zmeshmin = mesh->mVertices[0].z;
+		//meshmax
+		xmeshmax = mesh->mVertices[0].x;
+		ymeshmax = mesh->mVertices[0].y;
+		zmeshmax = mesh->mVertices[0].z;
 		if (first) {
 			//min
 			xmin = mesh->mVertices[0].x;
@@ -262,20 +264,32 @@ private:
 				vector.x = mesh->mVertices[i].x;
 				if (vector.x < xmin)
 					xmin = vector.x;
+				if (vector.x < xmeshmin)
+					xmeshmin = vector.x;
 				if (vector.x > xmax)
 					xmax = vector.x;
+				if (vector.x > xmeshmax)
+					xmeshmax = vector.x;
 
 				vector.y = mesh->mVertices[i].y;
 				if (vector.y < ymin)
 					ymin = vector.y;
+				if (vector.y < ymeshmin)
+					ymeshmin = vector.y;
 				if (vector.y > ymax)
 					ymax = vector.y;
+				if (vector.y > ymeshmax)
+					ymeshmax = vector.y;
 
 				vector.z = mesh->mVertices[i].z;
 				if (vector.z < zmin)
 					zmin = vector.z;
+				if (vector.z < zmeshmin)
+					zmeshmin = vector.z;
 				if (vector.z > zmax)
 					zmax = vector.z;
+				if (vector.z > zmeshmax)
+					zmeshmax = vector.z;
 
 				vertex.Position = vector;
 			}
@@ -317,15 +331,15 @@ private:
 
 		// Using min and max values of x,y,z create a bounding box
 		// And apply the current model matrix to it
-		this->bounding_box = {
-			vec3(xmin, ymin, zmin), //Vertex 0: Front, bottom, left corner
-			vec3(xmin, ymax, zmin), //Vertex 1: Front, top, left corner
-			vec3(xmax, ymax, zmin), //Vertex 2: Front, top, right corner
-			vec3(xmax, ymin, zmin), //Vertex 3: Front, bottom, right corner
-			vec3(xmin, ymin, zmax), //Vertex 4: Back, bottom, left corner
-			vec3(xmin, ymax, zmax), //Vertex 5: Back, top, left corner
-			vec3(xmax, ymax, zmax), //Vertex 6: Back, top, right corner
-			vec3(xmax, ymin, zmax)  //Vertex 7: Back, bottom, right corner
+		vector<vec3> bounding_box = {
+			vec3(xmeshmin, ymeshmin, zmeshmin), //Vertex 0: Front, bottom, left corner
+			vec3(xmeshmin, ymeshmax, zmeshmin), //Vertex 1: Front, top, left corner
+			vec3(xmeshmax, ymeshmax, zmeshmin), //Vertex 2: Front, top, right corner
+			vec3(xmeshmax, ymeshmin, zmeshmin), //Vertex 3: Front, bottom, right corner
+			vec3(xmeshmin, ymeshmin, zmeshmax), //Vertex 4: Back, bottom, left corner
+			vec3(xmeshmin, ymeshmax, zmeshmax), //Vertex 5: Back, top, left corner
+			vec3(xmeshmax, ymeshmax, zmeshmax), //Vertex 6: Back, top, right corner
+			vec3(xmeshmax, ymeshmin, zmeshmax)  //Vertex 7: Back, bottom, right corner
 		};
 
 		// now walk through each of the mesh's faces (a face is a mesh's triangle) and retrieve the corresponding vertex indices.
@@ -362,7 +376,7 @@ private:
 		}
 
 		// return a mesh object created from the extracted mesh data
-		return Mesh(vertices, indices, textures);
+		return Mesh(vertices, indices, textures, bounding_box);
 	}
 
 	// checks all material textures of a given type and loads the textures if they're not loaded yet.
