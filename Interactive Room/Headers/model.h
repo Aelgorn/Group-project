@@ -16,8 +16,12 @@
 #include <iostream>
 #include <map>
 #include <vector>
-using namespace std;
+#include "CollisionManager.h"
+
+
 using namespace glm;
+using namespace std;
+
 
 enum Shift {
 	SHIFT_UP,
@@ -37,8 +41,6 @@ enum Rotate {
 	ROTATE_UP_RIGHT
 };
 
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
-
 class Model
 {
 public:
@@ -48,6 +50,8 @@ public:
 	vector<Mesh> meshes;
 	string directory;
 	bool gammaCorrection;
+	//Representation of an object as an ellipsoid
+	vec3 objectElipse;
 	//steps to translate
 	const float step = 5.f;
 	//angle of rotation
@@ -63,9 +67,12 @@ public:
 		this->scale = scale;
 		model_matrix = glm::scale(mat4(1), vec3(scale));
 		loadModel(path);
+		objectElipse = scale * 0.5f * vec3(abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin));
 		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin), 0);
 		models.push_back(this);
 		ID = models.size();
+		//Once a model is created, track it with the collision manager
+		CollisionManager::getInstance()->trackModel(this);
 	}
 
 	// draws the model, and thus all its meshes
@@ -86,36 +93,43 @@ public:
 
 	// shifts an object in the direction specified
 	void shift(Shift direction) {
+
+		vec3 directionVector;
+
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin += scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			directionVector = normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin += scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			directionVector = -normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin += scale * -step * vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4((*cam).Right, 0)));
+			directionVector = -(*cam).Right;
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin += scale * step * vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4((*cam).Right, 0)));
+			directionVector = (*cam).Right;
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin += scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			directionVector = normalize(vec3((*cam).Front.x, 0, (*cam).Front.z));
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin += scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			directionVector = -normalize(vec3((*cam).Front.x, 0, (*cam).Front.z));
 			break;
 		}
+		vec3 requestedMove = scale * step * directionVector;
+		vec3 moveVector = CollisionManager::getInstance()->askMove(objectElipse, scale * step * directionVector, vec3(displacementFromOrigin));
+		if (direction == SHIFT_UP || direction == SHIFT_DOWN)
+		{
+			moveVector.y = requestedMove.y;
+		}
+		displacementFromOrigin += vec4(moveVector, 0);
+		moveVector = moveVector / scale;
+		model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * vec4(moveVector, 0)));
 	}
 
 	//rotates an object in the direction specified
 	void rotate(Rotate direction) {
+
 		mat4 rotation;
 		mat4 trans;
 		mat4 transBack;
@@ -144,6 +158,7 @@ public:
 			break;
 		}
 		model_matrix = transBack * rotation * trans * model_matrix;
+
 	}
 
 	//sets the shader that will be used to draw the object
@@ -156,12 +171,23 @@ public:
 		cam = camera;
 	}
 
+	//Apply the model matrix to each of bounding box's matrices and return the result
+	vector<vector<vec3>> getBoundingBoxes()
+	{
+		vector<vector<vec3>> bound;
+		for (unsigned int i = 0; i < meshes.size(); i++) {
+			bound.push_back(meshes[i].getBoundingBox(&model_matrix));
+		}
+		return bound;
+	}
+
+
 private:
 	//model matrix used to rotate and shift Model object
 	mat4 model_matrix;
 	//used to get the location of the center of an object in order to rotate it
 	vec4 displacementFromOrigin;
-	float xmin, ymin, zmin, xmax, ymax, zmax;
+	float xmin, ymin, zmin, xmax, ymax, zmax, xmeshmin, ymeshmin, zmeshmin, xmeshmax, ymeshmax, zmeshmax;
 	//for first time setup of xmin ,ymin, zmin, xmax, ymax, and zmax
 	bool first = true;
 	//makes drawing objects and switching shaders more seamless
@@ -210,6 +236,14 @@ private:
 	// processes mesh
 	Mesh processMesh(aiMesh *mesh, const aiScene *scene)
 	{
+		//meshmin
+		xmeshmin = mesh->mVertices[0].x;
+		ymeshmin = mesh->mVertices[0].y;
+		zmeshmin = mesh->mVertices[0].z;
+		//meshmax
+		xmeshmax = mesh->mVertices[0].x;
+		ymeshmax = mesh->mVertices[0].y;
+		zmeshmax = mesh->mVertices[0].z;
 		if (first) {
 			//min
 			xmin = mesh->mVertices[0].x;
@@ -237,20 +271,32 @@ private:
 				vector.x = mesh->mVertices[i].x;
 				if (vector.x < xmin)
 					xmin = vector.x;
+				if (vector.x < xmeshmin)
+					xmeshmin = vector.x;
 				if (vector.x > xmax)
 					xmax = vector.x;
+				if (vector.x > xmeshmax)
+					xmeshmax = vector.x;
 
 				vector.y = mesh->mVertices[i].y;
 				if (vector.y < ymin)
 					ymin = vector.y;
+				if (vector.y < ymeshmin)
+					ymeshmin = vector.y;
 				if (vector.y > ymax)
 					ymax = vector.y;
+				if (vector.y > ymeshmax)
+					ymeshmax = vector.y;
 
 				vector.z = mesh->mVertices[i].z;
 				if (vector.z < zmin)
 					zmin = vector.z;
+				if (vector.z < zmeshmin)
+					zmeshmin = vector.z;
 				if (vector.z > zmax)
 					zmax = vector.z;
+				if (vector.z > zmeshmax)
+					zmeshmax = vector.z;
 
 				vertex.Position = vector;
 			}
@@ -289,6 +335,20 @@ private:
 			}
 			vertices.push_back(vertex);
 		}
+
+		// Using min and max values of x,y,z create a bounding box
+		// And apply the current model matrix to it
+		vector<vec3> bounding_box = {
+			vec3(xmeshmin, ymeshmin, zmeshmin), //Vertex 0: Front, bottom, left corner
+			vec3(xmeshmin, ymeshmax, zmeshmin), //Vertex 1: Front, top, left corner
+			vec3(xmeshmax, ymeshmax, zmeshmin), //Vertex 2: Front, top, right corner
+			vec3(xmeshmax, ymeshmin, zmeshmin), //Vertex 3: Front, bottom, right corner
+			vec3(xmeshmin, ymeshmin, zmeshmax), //Vertex 4: Back, bottom, left corner
+			vec3(xmeshmin, ymeshmax, zmeshmax), //Vertex 5: Back, top, left corner
+			vec3(xmeshmax, ymeshmax, zmeshmax), //Vertex 6: Back, top, right corner
+			vec3(xmeshmax, ymeshmin, zmeshmax)  //Vertex 7: Back, bottom, right corner
+		};
+
 		// now walk through each of the mesh's faces (a face is a mesh's triangle) and retrieve the corresponding vertex indices.
 		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 		{
@@ -323,7 +383,7 @@ private:
 		}
 
 		// return a mesh object created from the extracted mesh data
-		return Mesh(vertices, indices, textures);
+		return Mesh(vertices, indices, textures, bounding_box);
 	}
 
 	// checks all material textures of a given type and loads the textures if they're not loaded yet.
@@ -349,7 +409,7 @@ private:
 			if (!skip)
 			{   // if texture hasn't been loaded already, load it
 				Texture texture;
-				texture.id = TextureFromFile(str.C_Str(), this->directory);
+				texture.id = TextureFromFile(str.C_Str(), this->directory, false);
 				texture.type = typeName;
 				texture.path = str;
 				textures.push_back(texture);
@@ -358,45 +418,46 @@ private:
 		}
 		return textures;
 	}
+
+	unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
+	{
+		string filename = string(path);
+		filename = directory + '/' + filename;
+
+		unsigned int textureID;
+		glGenTextures(1, &textureID);
+
+		int width, height, nrComponents;
+		unsigned char *data = SOIL_load_image(filename.c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
+		if (data)
+		{
+			GLenum format;
+			if (nrComponents == 1)
+				format = GL_RED;
+			else if (nrComponents == 3)
+				format = GL_RGB;
+			else if (nrComponents == 4)
+				format = GL_RGBA;
+
+			glBindTexture(GL_TEXTURE_2D, textureID);
+			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			SOIL_free_image_data(data);
+		}
+		else
+		{
+			cout << "Texture failed to load at path: " << path << endl;
+			SOIL_free_image_data(data);
+		}
+
+		return textureID;
+	}
+
 };
-
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
-{
-	string filename = string(path);
-	filename = directory + '/' + filename;
-
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char *data = SOIL_load_image(filename.c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
-	if (data)
-	{
-		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		SOIL_free_image_data(data);
-	}
-	else
-	{
-		cout << "Texture failed to load at path: " << path << endl;
-		SOIL_free_image_data(data);
-	}
-
-	return textureID;
-}
 #endif

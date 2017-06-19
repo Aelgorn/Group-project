@@ -269,7 +269,7 @@ int main()
 		skyBoxShader.use();
 		skyBoxShader.setMat4("projection", projection);
 		skyBoxShader.setMat4("view", view);
-		skyBoxShader.setMat4("model", glm::translate(glm::mat4(1.0), camera.getCameraPosition()));
+		skyBoxShader.setMat4("model", glm::translate(glm::mat4(1.0), camera.getPosition()));
 		generalShader.use();
 		generalShader.setMat4("projection", projection);
 		generalShader.setMat4("view", view);
