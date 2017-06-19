@@ -1,6 +1,7 @@
 # Group-project  
   
 Rotate the camera: .......................................... left click + drag mouse  
+Toggle lighting on/off in current room: ..................... L  
 Select object: .............................................. right click  
 Deselect object: ............................................ right click on walls, lamps, windows, floor or ceiling  
   
