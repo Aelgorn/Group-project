@@ -10,6 +10,11 @@ uniform vec3 livLamp1;
 uniform vec3 livLamp2;
 uniform vec3 bedLamp;
 uniform vec3 kitchLamp;
+
+uniform int livOn;
+uniform int bedOn;
+uniform int kichOn;
+
 void main()
 {
 	float ambientStrength = 0.04f;
@@ -40,10 +45,10 @@ void main()
 	//ambiant light
 	vec3 ambiant = ambientStrength * lampLightColor;
 	//diffuse light
-	vec3 livLamp1Light = attenuationLivLamp1 * livLamp1Diff * lampLightColor;
-	vec3 livLamp2Light = attenuationLivLamp2 * livLamp2Diff * lampLightColor;
-	vec3 bedLampLight = attenuationBedLamp * bedLampDiff * lampLightColor;
-	vec3 kitchLampLight = attenuationKitchLamp * kitchLampDiff * lampLightColor;
+	vec3 livLamp1Light = attenuationLivLamp1 * livLamp1Diff * lampLightColor * livOn;
+	vec3 livLamp2Light = attenuationLivLamp2 * livLamp2Diff * lampLightColor * livOn;
+	vec3 bedLampLight = attenuationBedLamp * bedLampDiff * lampLightColor * bedOn;
+	vec3 kitchLampLight = attenuationKitchLamp * kitchLampDiff * lampLightColor * kichOn;
 	//final color
 	FragColor = vec4(ambiant + livLamp1Light + livLamp2Light + bedLampLight + kitchLampLight, 1) * texture(texture_diffuse1, TexCoords);
 }

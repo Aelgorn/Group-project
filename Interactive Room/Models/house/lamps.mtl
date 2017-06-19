@@ -2,11 +2,11 @@
 ## Alias OBJ Material File
 # Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
 
-newmtl Metal_Aluminum_Anodized
+newmtl Wood_Cherry_Original
 Ka 0.000000 0.000000 0.000000
-Kd 0.184314 0.188235 0.200000
+Kd 0.596078 0.337255 0.164706
 Ks 0.330000 0.330000 0.330000
-map_Kd lamps/Metal_Aluminum_Anodized.jpg
+map_Kd lamps/Wood_Cherry_Original.jpg
 
 newmtl White_1
 Ka 0.000000 0.000000 0.000000
