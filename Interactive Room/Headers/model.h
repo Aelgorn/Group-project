@@ -101,7 +101,7 @@ public:
 			directionVector = normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_DOWN:
-			directionVector = normalize(vec3(0, (*cam).Up.y, 0));
+			directionVector = -normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_LEFT:
 			directionVector = -(*cam).Right;
@@ -116,7 +116,12 @@ public:
 			directionVector = -normalize(vec3((*cam).Front.x, 0, (*cam).Front.z));
 			break;
 		}
+		vec3 requestedMove = scale * step * directionVector;
 		vec3 moveVector = CollisionManager::getInstance()->askMove(objectElipse, scale * step * directionVector, vec3(displacementFromOrigin));
+		if (direction == SHIFT_UP || direction == SHIFT_DOWN)
+		{
+			moveVector.y = requestedMove.y;
+		}
 		displacementFromOrigin += vec4(moveVector, 0);
 		moveVector = moveVector / scale;
 		model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * vec4(moveVector, 0)));
