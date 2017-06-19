@@ -169,12 +169,12 @@ vec3 CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 		//Transform back to R3 and remove vertical component;
 		result = invCMD * newVelocity;
 		result.y = 0.0f;
-		std::cout << "Collision:" << result.x << ", " << result.y << ", " << result.z << endl;	}
+		slidePoint = invCMD * slidePoint;
+	}
 	else
 	{
 		result = R3velocity;
 		result.y = 0.0f;
-		std::cout << "No collision:"  << result.x << ", " << result.y <<  ", " << result.z << endl;
 	}
 	
 	return result;
@@ -230,6 +230,10 @@ void CollisionManager::checkTriangle(CollisionPacket* col, vec3 p1, vec3 p2, vec
 		if (t0 > 1.0f || t1 < 0.0f)
 		{
 			//Outside the radius, no collision
+			return;
+		}
+		else if (t0 < -30.0f || t1 > 30.0f)
+		{
 			return;
 		}
 

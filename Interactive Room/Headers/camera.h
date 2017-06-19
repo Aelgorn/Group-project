@@ -89,10 +89,7 @@ public:
 
 		//center the elipse just above the ground so it collides with low objects
 		collisionSphereCenter.y = PlayerElipse.y + 1.0f;
-		std::cout << collisionSphereCenter.y << std::endl;
 		vec3 result = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, collisionSphereCenter);
-		std::cout << "sending a request to move :" << Position.x << ", " << Position.y << ", " << Position.z << " -> " <<
-			velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
 		Position += result;
 	}
 
