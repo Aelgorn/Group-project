@@ -15,7 +15,7 @@ struct CollisionPacket
 	vec3 eBasePoint;
 
 	bool foundCollision;
-	double nearestDistance;
+	float nearestDistance;
 	vec3 intersectionPoint;
 };
 
@@ -55,7 +55,7 @@ public:
 		float dotproduct = dot(normal, direction);
 		return glm::max(dotproduct, 0.0f);
 	}
-	inline double signedDistanceTo(const vec3 &point) const
+	inline float signedDistanceTo(const vec3 &point) const
 	{
 		return dot(point, normal) + equation[3];
 	}

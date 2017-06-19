@@ -19,7 +19,7 @@ public:
 	//prototype for static accessor
 	static CollisionManager *getInstance();
 	void trackModel(Model* model);
-	bool askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, glm::vec3 R3position);
+	vec3 askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, glm::vec3 R3position);
 	bool getLowestRoot(float a, float b, float c, float current, float* root);
 	bool checkPointInTriangle(const vec3 &point, const vec3 &p1, const vec3 &p2, const vec3 & p3);
 

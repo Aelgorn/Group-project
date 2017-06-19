@@ -84,11 +84,10 @@ public:
 			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
-		bool okToMove = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
-		if (okToMove)
-		{
-			Position += velocity;
-		}
+		vec3 result = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
+		std::cout << "sending a request to move :" << Position.x << ", " << Position.y << ", " << Position.z << " -> " <<
+			velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
+		Position += result;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

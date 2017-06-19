@@ -83,8 +83,9 @@ bool CollisionManager::checkPointInTriangle(const vec3 &point, const vec3 &p1, c
 	return (u >= 0) && (v >= 0) && (u + v < 1);
 }
 
-bool CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, glm::vec3 R3position)
+vec3 CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, glm::vec3 R3position)
 {
+	glm::vec3 result;
 	//Construct a collision packet
 	CollisionPacket packet;
 	packet.elipsoidRadius = elipsoidradius;
@@ -133,9 +134,53 @@ bool CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 	}
 	if (packet.foundCollision == true)
 	{
-		return false;
+		vec3 elipsoid = packet.elipsoidRadius;
+		vec3 intersection = packet.intersectionPoint;
+		mat3 invCMD = mat3(
+			vec3(elipsoid.x, 0.0f, 0.0f),
+			vec3(0.0f, elipsoid.y, 0.0f),
+			vec3(0.0f, 0.0f, elipsoid.z)
+		);
+
+		vec3 destination = packet.eBasePoint + packet.eVelocity;
+		
+		//Set the length of the movement vector so we don't move right to the collision point
+		vec3 V = 0.50f * packet.nearestDistance * normalize(packet.eVelocity);
+		vec3 newBasePoint = packet.eBasePoint + V;
+		
+		//Move the intersection point a little closer (so we don't move right to the collision point)
+		packet.intersectionPoint -= 0.5f*packet.nearestDistance * normalize(V);
+
+		//Calculate a sliding plane
+		vec3 slidePoint = packet.intersectionPoint;
+		vec3 slideNormal = newBasePoint - packet.intersectionPoint;
+		slideNormal = normalize(slideNormal);
+		Plane slidingPlane(slidePoint, slideNormal);
+
+		vec3 newDestination = destination - slidingPlane.signedDistanceTo(destination) * slideNormal;
+
+		vec3 newVelocity = newDestination - packet.intersectionPoint;
+
+		//Transform back to R3 and remove vertical component;
+		result = invCMD * newVelocity;
+		result.y = 0.0f;
+		std::cout << "Collision:" << result.x << ", " << result.y << ", " << result.z << endl;	}
+	else
+	{
+		result = R3velocity;
+		result.y = 0.0f;
+		std::cout << "No collision:"  << result.x << ", " << result.y <<  ", " << result.z << endl;
 	}
-	return true;
+	//For some reason when colliding with door frame edges, function returns a nan vector
+	//So just dont move then
+	if (isnan(result.x) || isnan(result.y))
+	{
+		return glm::vec3(0, 0, 0);
+	}
+	else
+	{
+		return result;
+	}
 }
 
 //Assume that p1, p2 and p3 are given in front-facing order
