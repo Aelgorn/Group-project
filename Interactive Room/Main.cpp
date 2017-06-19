@@ -51,6 +51,8 @@ Shader* selection;
 Shader* skybox_shader;
 //boolean determining whether an object is selected or not
 bool isSelected;
+//booleans to switch light on/off
+bool bed = true, liv = true, kich = true;
 
 //Skybox objects
 GLuint skyboxVAO, skyboxVBO, skyboxEBO, skyboxCubemap;
@@ -126,6 +128,9 @@ int main()
 	generalShader.setVec3("livLamp2", livLamp2);
 	generalShader.setVec3("bedLamp", bedLamp);
 	generalShader.setVec3("kitchLamp", kitchLamp);
+	generalShader.setBool("kichOn", kich);
+	generalShader.setBool("bedOn", bed);
+	generalShader.setBool("livOn", liv);
 
 	//Load the skybox
 	loadSkybox();
@@ -354,6 +359,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		rotating = true;
 	if (key == GLFW_KEY_R && action == GLFW_RELEASE)
 		rotating = false;
+	if (key == GLFW_KEY_L && action == GLFW_PRESS) {
+		if (camera.Position.x < scaling * 1545) {
+			kich = !kich;
+			general->setBool("kichOn", kich);
+		}
+		else if (camera.Position.z > -scaling * 1400){
+			liv = !liv;
+			general->setBool("livOn", liv);
+		}
+		else {
+			bed = !bed;
+			general->setBool("bedOn", bed);
+		}
+	}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
