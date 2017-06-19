@@ -4,6 +4,7 @@
 #include "glew.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
+#include "CollisionManager.h"
 #include <iostream>
 #include <vector>
 
@@ -32,6 +33,7 @@ public:
 	glm::vec3 Up;
 	glm::vec3 Right;
 	glm::vec3 WorldUp;
+	glm::vec3 PlayerElipse;
 	// Eular Angles
 	float Yaw;
 	float Pitch;
@@ -47,6 +49,7 @@ public:
 		this->WorldUp  = up;
 		this->Yaw      = yaw;
 		this->Pitch    = pitch;
+		this->PlayerElipse = glm::vec3(1,1,1);
 		updateCameraVectors();
 	}
 
@@ -56,7 +59,7 @@ public:
 		return glm::lookAt(Position, Position + Front, Up);
 	}
 
-	glm::vec3 getCameraPosition()
+	glm::vec3 getPosition()
 	{
 		return Position;
 	}
@@ -65,25 +68,32 @@ public:
 	void ProcessMovement(Movement direction, float steps)
 	{
 		float speed = MovementSpeed * steps;
+		glm::vec3 velocity;
 
 		switch (direction) {
 		case MOVE_FORWARD:
-			Position.x += Front.x * speed;
-			Position.z += Front.z * speed;
+			velocity = speed * glm::vec3(Front.x, 0.0f, Front.z);
 			break;
 		case MOVE_BACKWARD:
-			Position.x -= Front.x * speed;
-			Position.z -= Front.z * speed;
+			velocity = -speed * glm::vec3(Front.x, 0.0f, Front.z);
 			break;
 		case MOVE_LEFT:
-			Position.x -= Right.x * speed;
-			Position.z -= Right.z * speed;
+			velocity = -speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		case MOVE_RIGHT:
-			Position.x += Right.x * speed;
-			Position.z += Right.z * speed;
+			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
+		//Adjust the camera position so its collision sphere is lower than the view angle
+		vec3 collisionSphereCenter = Position;
+
+		//center the elipse just above the ground so it collides with low objects
+		collisionSphereCenter.y = PlayerElipse.y + 1.0f;
+		std::cout << collisionSphereCenter.y << std::endl;
+		vec3 result = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, collisionSphereCenter);
+		std::cout << "sending a request to move :" << Position.x << ", " << Position.y << ", " << Position.z << " -> " <<
+			velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
+		Position += result;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
