@@ -16,6 +16,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void selectObject(double x, double y);
+GLuint loadCubeMap(vector<string> faces);
+void loadSkybox();
+void drawSkybox();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -45,8 +48,12 @@ vector<Model*> Model::models;
 //shader pointers to switch between shaders in functions
 Shader* general;
 Shader* selection;
+Shader* skybox_shader;
 //boolean determining whether an object is selected or not
 bool isSelected;
+
+//Skybox objects
+GLuint skyboxVAO, skyboxVBO, skyboxEBO, skyboxCubemap;
 
 int main()
 {
@@ -105,7 +112,8 @@ int main()
 	general = &generalShader;
 	Shader selectionShader("Shaders/selection_vert.shader", "Shaders/selection_frag.shader");
 	selection = &selectionShader;
-	//Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+	Shader skyBoxShader("Shaders/skybox_vertex.shader", "Shaders/skybox_fragment.shader");
+	skybox_shader = &skyBoxShader;
 
 	generalShader.use();
 	// scaled light positions
@@ -119,21 +127,8 @@ int main()
 	generalShader.setVec3("bedLamp", bedLamp);
 	generalShader.setVec3("kitchLamp", kitchLamp);
 
-	// load models
-	// -----------
-
-	//GLuint skyboxTexture;
-	//glGenTextures(1, &skyboxTexture);
-
-	//skyboxTexture = SOIL_load_OGL_single_cubemap
-	//(
-	//	"Models/skybox.jpg",
-	//	"WNESUD",
-	//	SOIL_LOAD_AUTO,
-	//	SOIL_CREATE_NEW_ID,
-	//	SOIL_FLAG_MIPMAPS
-	//);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	//Load the skybox
+	loadSkybox();
 
 	//number of objects to load, hard-coded
 	int objNum = 28;
@@ -230,7 +225,6 @@ int main()
 	Model windows("Models/house/windows.obj");
 	cout << "windows loaded,\t\tposition -> " << windows.displacement().x << " : " << windows.displacement().y << " : " << windows.displacement().z << ".\t\t";
 	cout << "Objects left: " << --objNum << endl;
-	//Model skyBox("Models/cube.obj");
 
 	//sets the shader that each model is going to use.
 	for (int i = 0; i < Model::models.size(); ++i) {
@@ -267,6 +261,10 @@ int main()
 
 		// update shaders with view and projection
 		// ---------------------------------------
+		skyBoxShader.use();
+		skyBoxShader.setMat4("projection", projection);
+		skyBoxShader.setMat4("view", view);
+		skyBoxShader.setMat4("model", glm::translate(glm::mat4(1.0), camera.getCameraPosition()));
 		generalShader.use();
 		generalShader.setMat4("projection", projection);
 		generalShader.setMat4("view", view);
@@ -279,20 +277,12 @@ int main()
 		// render
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//skybox.draw();
+		drawSkybox();
 
 		for (int i = 0; i < Model::models.size(); ++i) {
 			(*(Model::models[i])).Draw();
 		}
-
-		//skyBoxShader.use();
-		//glActiveTexture(GL_TEXTURE1);
-		//skyBoxShader.setMat4("view_matrix", view);
-		//skyBoxShader.setMat4("projection_matrix", projection);
-		//skyBoxShader.setInt("skyboxTexture", skyboxTexture);
-		//glDepthMask(GL_FALSE);
-		//skyBox.Draw(skyBoxShader);
-		//glDepthMask(GL_TRUE);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 		// glfw: swap buffers
 		// ------------------
@@ -467,4 +457,105 @@ void selectObject(double x, double y) {
 		(*(Model::models[i])).setShader(general);
 	if (isSelected)
 		(*selected).setShader(selection);
+}
+
+GLuint loadCubeMap(vector<string> faces)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrComponents;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char *data = SOIL_load_image(faces[i].c_str(), &width, &height, &nrComponents, SOIL_LOAD_AUTO);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+			SOIL_free_image_data(data);
+		}
+		else
+		{
+			cout << "Texture failed to load at path: " << faces[i] << endl;
+			SOIL_free_image_data(data);
+		}
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+void loadSkybox()
+{
+	//Skybox
+	GLfloat skybox[] = {
+		-3, -3, -3, //front, bottom-left
+		3, -3, -3, //front, bottom-right
+		-3, 3, -3, //front, top-left
+		3, 3, -3, //front, top-right
+		-3, -3, 3, //back, bottom-left
+		3, -3, 3, //back, bottom-right
+		-3, 3, 3, //back, top-left
+		3, 3, 3  //back, top-right
+	};
+	GLuint skyboxIndeces[] = {
+		0,3,2,
+		0,1,3, //Front face
+		4,6,7,
+		4,7,5, //Back face
+		0,2,6,
+		0,6,4, //Left face
+		1,7,3,
+		1,5,7,//Right face
+		2,7,6,
+		2,3,7,//Top face
+		0,4,5,
+		0,5,1 //Bottom face
+
+	};
+
+	//Spinner Objects
+	glGenBuffers(1, &skyboxVBO);
+	glGenBuffers(1, &skyboxEBO);
+	glGenVertexArrays(1, &skyboxVAO);
+
+	glBindVertexArray(skyboxVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skybox), skybox, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndeces), skyboxIndeces, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+
+	//Skybox settings
+	vector<string> faces = {
+		"Models/skybox/N.png",
+		"Models/skybox/S.png",
+		"Models/skybox/U.png",
+		"Models/skybox/D.png",
+		"Models/skybox/E.png",
+		"Models/skybox/W.png"
+	};
+	skyboxCubemap = loadCubeMap(faces);
+
+}
+
+void drawSkybox()
+{
+	glDepthMask(GL_FALSE);
+	skybox_shader->use();
+	glBindVertexArray(skyboxVAO);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxCubemap);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);
 }

@@ -56,6 +56,11 @@ public:
 		return glm::lookAt(Position, Position + Front, Up);
 	}
 
+	glm::vec3 getCameraPosition()
+	{
+		return Position;
+	}
+
 	// Processes movement. Uses Movement enum to keep independant from input type (keyboard, controller, mouse, etc).
 	void ProcessMovement(Movement direction, float steps)
 	{
