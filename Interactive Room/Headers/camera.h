@@ -84,9 +84,15 @@ public:
 			velocity = speed * glm::vec3(Right.x, 0.0f, Right.z);
 			break;
 		}
-		vec3 result = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, Position);
+		//Adjust the camera position so its collision sphere is lower than the view angle
+		vec3 collisionSphereCenter = Position;
+
+		//center the elipse just above the ground so it collides with low objects
+		collisionSphereCenter.y = PlayerElipse.y + 1.0f;
+		std::cout << collisionSphereCenter.y << std::endl;
+		vec3 result = CollisionManager::getInstance()->askMove(PlayerElipse, velocity, collisionSphereCenter);
 		std::cout << "sending a request to move :" << Position.x << ", " << Position.y << ", " << Position.z << " -> " <<
-			velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
+			velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
 		Position += result;
 	}
 

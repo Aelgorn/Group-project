@@ -134,6 +134,7 @@ vec3 CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 	}
 	if (packet.foundCollision == true)
 	{
+		float nearDistance = 0.05f;
 		vec3 elipsoid = packet.elipsoidRadius;
 		vec3 intersection = packet.intersectionPoint;
 		mat3 invCMD = mat3(
@@ -143,13 +144,17 @@ vec3 CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 		);
 
 		vec3 destination = packet.eBasePoint + packet.eVelocity;
-		
-		//Set the length of the movement vector so we don't move right to the collision point
-		vec3 V = 0.50f * packet.nearestDistance * normalize(packet.eVelocity);
-		vec3 newBasePoint = packet.eBasePoint + V;
-		
-		//Move the intersection point a little closer (so we don't move right to the collision point)
-		packet.intersectionPoint -= 0.5f*packet.nearestDistance * normalize(V);
+		vec3 newBasePoint = packet.eBasePoint;
+
+		//Set the length of the movement vector so we don't move close but not right to the collision point
+		if (packet.nearestDistance >= nearDistance)
+		{
+			vec3 V = (packet.nearestDistance - nearDistance) * normalize(packet.eVelocity);
+			newBasePoint = newBasePoint + V;
+
+			//Move the intersection point closer to calculate the sliding plane
+			packet.intersectionPoint -= nearDistance * normalize(V);
+		}
 
 		//Calculate a sliding plane
 		vec3 slidePoint = packet.intersectionPoint;
@@ -171,16 +176,8 @@ vec3 CollisionManager::askMove(glm::vec3 elipsoidradius, glm::vec3 R3velocity, g
 		result.y = 0.0f;
 		std::cout << "No collision:"  << result.x << ", " << result.y <<  ", " << result.z << endl;
 	}
-	//For some reason when colliding with door frame edges, function returns a nan vector
-	//So just dont move then
-	if (isnan(result.x) || isnan(result.y))
-	{
-		return glm::vec3(0, 0, 0);
-	}
-	else
-	{
-		return result;
-	}
+	
+	return result;
 }
 
 //Assume that p1, p2 and p3 are given in front-facing order

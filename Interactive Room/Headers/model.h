@@ -50,6 +50,8 @@ public:
 	vector<Mesh> meshes;
 	string directory;
 	bool gammaCorrection;
+	//Representation of an object as an ellipsoid
+	vec3 objectElipse;
 	//steps to translate
 	const float step = 5.f;
 	//angle of rotation
@@ -65,6 +67,7 @@ public:
 		this->scale = scale;
 		model_matrix = glm::scale(mat4(1), vec3(scale));
 		loadModel(path);
+		objectElipse = scale * 0.5f * vec3(abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin));
 		displacementFromOrigin = vec4(scale * 0.5f * vec3(xmax + xmin, ymax + ymin, zmax + zmin), 0);
 		models.push_back(this);
 		ID = models.size();
@@ -91,33 +94,32 @@ public:
 	// shifts an object in the direction specified
 	void shift(Shift direction) {
 
+		vec3 directionVector;
+
 		switch (direction) {
 		case SHIFT_UP:
-			displacementFromOrigin += scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			directionVector = normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_DOWN:
-			displacementFromOrigin += scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3(0, (*cam).Up.y, 0)), 0)));
+			directionVector = normalize(vec3(0, (*cam).Up.y, 0));
 			break;
 		case SHIFT_LEFT:
-			displacementFromOrigin += scale * -step * vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4((*cam).Right, 0)));
+			directionVector = -(*cam).Right;
 			break;
 		case SHIFT_RIGHT:
-			displacementFromOrigin += scale * step * vec4((*cam).Right, 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4((*cam).Right, 0)));
+			directionVector = (*cam).Right;
 			break;
 		case SHIFT_FORWARD:
-			displacementFromOrigin += scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			directionVector = normalize(vec3((*cam).Front.x, 0, (*cam).Front.z));
 			break;
 		case SHIFT_BACKWARD:
-			displacementFromOrigin += scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0);
-			model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * -step * vec4(normalize(vec3((*cam).Front.x, 0, (*cam).Front.z)), 0)));
+			directionVector = -normalize(vec3((*cam).Front.x, 0, (*cam).Front.z));
 			break;
 		}
-
+		vec3 moveVector = CollisionManager::getInstance()->askMove(objectElipse, scale * step * directionVector, vec3(displacementFromOrigin));
+		displacementFromOrigin += vec4(moveVector, 0);
+		moveVector = moveVector / scale;
+		model_matrix = translate(model_matrix, vec3(transpose(model_matrix) / scale * vec4(moveVector, 0)));
 	}
 
 	//rotates an object in the direction specified
